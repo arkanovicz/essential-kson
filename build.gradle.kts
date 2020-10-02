@@ -58,7 +58,13 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting
+        val commonMain by getting {
+            dependencies {
+                api("io.github.microutils:kotlin-logging:2.0.3")
+                api("org.jetbrains.kotlinx:kotlinx-io:0.1.16")
+                //implementation("io.github.microutils:kotlin-logging-metadata:2.0.3")
+            }
+        }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test-common"))
@@ -68,6 +74,9 @@ kotlin {
         val androidMain by getting {
             dependencies {
                 implementation("com.google.android.material:material:1.2.0")
+                implementation("org.slf4j:slf4j-api:1.7.30")
+                implementation("org.slf4j:slf4j-android:1.7.30")
+                implementation("io.github.microutils:kotlin-logging-jvm:2.0.3")
             }
         }
         val androidTest by getting {
@@ -81,6 +90,9 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-jdk8"))
+                implementation("org.slf4j:slf4j-api:1.7.30")
+                implementation("org.slf4j:slf4j-android:1.7.30")
+                implementation("io.github.microutils:kotlin-logging-jvm:2.0.3")
             }
         }
         val jvmTest by getting {
@@ -91,6 +103,7 @@ kotlin {
         val jsMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-js"))
+                implementation("io.github.microutils:kotlin-logging-js:2.0.3")
             }
         }
         val jsTest by getting {
