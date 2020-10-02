@@ -135,7 +135,7 @@ interface Json : JsonSerializable {
     /**
      * Implements a JSON array
      */
-    data class Array : List<JsonSerializable?>, Json {
+    class Array : MutableList<Any?>, Json {
         /**
          * Builds an empty Json.Array.
          */
@@ -144,12 +144,12 @@ interface Json : JsonSerializable {
         /**
          * Builds a Json.Array with specified items
          */
-        constructor(vararg items: Serializable?) : this(Arrays.asList<Serializable?>(*items)) {}
+        constructor(vararg items: Any?) : this(listOf(*items)) {}
 
         /**
          * Builds a Json.Array with the content of an existing collection.
          */
-        constructor(collection: Collection<Serializable?>?) : super(collection) {}
+        constructor(collection: Collection<JsonSerializable?>?) : super(collection) {}
 
         /**
          * Check if the underlying container is an array.
@@ -257,7 +257,7 @@ interface Json : JsonSerializable {
          * @param  index index of the element to return
          * @return the element at the specified position as a String value
          */
-        fun getString(index: Int): String {
+        fun getString(index: Int): String? {
             return TypeUtils.toString(get(index))
         }
 
@@ -266,7 +266,7 @@ interface Json : JsonSerializable {
          * @param  index index of the element to return
          * @return the element at the specified position as a Boolean value
          */
-        fun getBoolean(index: Int): Boolean {
+        fun getBoolean(index: Int): Boolean? {
             return TypeUtils.toBoolean(get(index))
         }
 
@@ -275,7 +275,7 @@ interface Json : JsonSerializable {
          * @param  index index of the element to return
          * @return the element at the specified position as a Character value
          */
-        fun getChar(index: Int): Char {
+        fun getChar(index: Int): Char? {
             return TypeUtils.toChar(get(index))
         }
 
@@ -284,7 +284,7 @@ interface Json : JsonSerializable {
          * @param  index index of the element to return
          * @return the element at the specified position as a Byte value
          */
-        fun getByte(index: Int): Byte {
+        fun getByte(index: Int): Byte? {
             return TypeUtils.toByte(get(index))
         }
 
@@ -293,7 +293,7 @@ interface Json : JsonSerializable {
          * @param  index index of the element to return
          * @return the element at the specified position as a Short value
          */
-        fun getShort(index: Int): Short {
+        fun getShort(index: Int): Short? {
             return TypeUtils.toShort(get(index))
         }
 
@@ -302,7 +302,7 @@ interface Json : JsonSerializable {
          * @param  index index of the element to return
          * @return the element at the specified position as a Integer value
          */
-        fun getInteger(index: Int): Int {
+        fun getInteger(index: Int): Int? {
             return TypeUtils.toInt(get(index))
         }
 
@@ -311,7 +311,7 @@ interface Json : JsonSerializable {
          * @param  index index of the element to return
          * @return the element at the specified position as a Long value
          */
-        fun getLong(index: Int): Long {
+        fun getLong(index: Int): Long? {
             return TypeUtils.toLong(get(index))
         }
 
@@ -329,7 +329,7 @@ interface Json : JsonSerializable {
          * @param  index index of the element to return
          * @return the element at the specified position as a Float value
          */
-        fun getFloat(index: Int): Float {
+        fun getFloat(index: Int): Float? {
             return TypeUtils.toFloat(get(index))
         }
 
@@ -338,7 +338,7 @@ interface Json : JsonSerializable {
          * @param  index index of the element to return
          * @return the element at the specified position as a Double value
          */
-        fun getDouble(index: Int): Double {
+        fun getDouble(index: Int): Double? {
             return TypeUtils.toDouble(get(index))
         }
 
@@ -455,7 +455,7 @@ interface Json : JsonSerializable {
     /**
      * Implements a JSON object
      */
-    data class Object : Map<String?, JsonSerializable?>, Json,
+    class Object : MutableMap<String?, JsonSerializable?>, Json,
         Iterable<Map.Entry<String?, JsonSerializable?>?> {
         /**
          * Builds an emepty Json.Object.
@@ -620,7 +620,7 @@ interface Json : JsonSerializable {
          * @param  key key of the element to return
          * @return the element under the specified key as a Character value or null if the key doesn't exist
          */
-        fun getChar(key: String?): Char {
+        fun getChar(key: String?): Char? {
             return TypeUtils.toChar(get(key))
         }
 
@@ -629,7 +629,7 @@ interface Json : JsonSerializable {
          * @param  key key of the element to return
          * @return the element under the specified key as a Byte value or null if the key doesn't exist
          */
-        fun getByte(key: String?): Byte {
+        fun getByte(key: String?): Byte? {
             return TypeUtils.toByte(get(key))
         }
 
@@ -638,7 +638,7 @@ interface Json : JsonSerializable {
          * @param  key key of the element to return
          * @return the element under the specified key as a Short value or null if the key doesn't exist
          */
-        fun getShort(key: String?): Short {
+        fun getShort(key: String?): Short? {
             return TypeUtils.toShort(get(key))
         }
 
@@ -647,7 +647,7 @@ interface Json : JsonSerializable {
          * @param  key key of the element to return
          * @return the element under the specified key as a Integer value or null if the key doesn't exist
          */
-        fun getInteger(key: String?): Int {
+        fun getInteger(key: String?): Int? {
             return TypeUtils.toInteger(get(key))
         }
 
@@ -656,7 +656,7 @@ interface Json : JsonSerializable {
          * @param  key key of the element to return
          * @return the element under the specified key as a Long value or null if the key doesn't exist
          */
-        fun getLong(key: String?): Long {
+        fun getLong(key: String?): Long? {
             return TypeUtils.toLong(get(key))
         }
 
@@ -674,7 +674,7 @@ interface Json : JsonSerializable {
          * @param  key key of the element to return
          * @return the element under the specified key as a Float value or null if the key doesn't exist
          */
-        fun getFloat(key: String?): Float {
+        fun getFloat(key: String?): Float? {
             return TypeUtils.toFloat(get(key))
         }
 
@@ -683,7 +683,7 @@ interface Json : JsonSerializable {
          * @param  key key of the element to return
          * @return the element under the specified key as a Double value or null if the key doesn't exist
          */
-        fun getDouble(key: String?): Double {
+        fun getDouble(key: String?): Double? {
             return TypeUtils.toDouble(get(key))
         }
 
@@ -753,7 +753,7 @@ interface Json : JsonSerializable {
          * @param elem element to set
          * @return the object
          */
-        operator fun set(key: String?, elem: Serializable?): Object {
+        operator fun set(key: String?, elem: JsonSerializable?): Object {
             put(key, elem)
             return this
         }
@@ -763,7 +763,7 @@ interface Json : JsonSerializable {
          * @param elems elements to add
          * @return the object
          */
-        fun setAll(elems: Map<out String?, Serializable?>?): Object {
+        fun setAll(elems: Map<out String?, JsonSerializable?>?): Object {
             putAll(elems!!)
             return this
         }
@@ -773,7 +773,7 @@ interface Json : JsonSerializable {
             for (entry in entries) {
                 var value = entry.value
                 if (value is Json) {
-                    value = value.clone() as Serializable
+                    value = value.clone() as JsonSerializable
                     entry.setValue(value)
                 }
             }
@@ -843,7 +843,7 @@ interface Json : JsonSerializable {
          * @throws JsonException if serialization fails
          */
         @Throws(JsonException::class)
-        fun writeSerializable(serializable: Serializable?, writer: Writer) {
+        fun writeSerializable(serializable: JsonSerializable?, writer: Writer) {
             if (serializable == null) {
                 writer.write("null")
             } else if (serializable is Boolean) {
@@ -883,7 +883,7 @@ interface Json : JsonSerializable {
     /**
      * JSON parser.
      */
-    class Parser private constructor(reader: Reader) {
+    private class Parser private constructor(input: Input) {
         private val reader: Reader? = null
         private var row = 1
         private var col = 0
@@ -943,7 +943,7 @@ interface Json : JsonSerializable {
 
         @Throws(JsonException::class)
         private fun skipWhiteSpace() {
-            while (Character.isWhitespace(next())) {
+            while (Char.isWhitespace(next())) {
             }
         }
 
@@ -1017,8 +1017,8 @@ interface Json : JsonSerializable {
         }
 
         @Throws(JsonException::class)
-        private fun parseValue(complete: Boolean = false): Serializable? {
-            var ret: Serializable? = null
+        private fun parseValue(complete: Boolean = false): JsonSerializable? {
+            var ret: JsonSerializable? = null
             skipWhiteSpace()
             if (ch == -1) {
                 throw error("unexpecting end of stream")
@@ -1045,7 +1045,7 @@ interface Json : JsonSerializable {
         }
 
         @Throws(JsonException::class)
-        private fun parseKeyword(keyword: String, value: Serializable?): Serializable? {
+        private fun parseKeyword(keyword: String, value: JsonSerializable?): JsonSerializable? {
             for (i in 0 until keyword.length) {
                 if (i > 0) {
                     next()
@@ -1241,7 +1241,7 @@ interface Json : JsonSerializable {
         private fun readDigits(zeroFirstAllowed: Boolean): Int {
             var len = 0
             while (pos < buffer.size) {
-                if (!Character.isDigit(ch)) {
+                if (!Char.isDigit(ch)) {
                     break
                 }
                 buffer[pos++] = ch.toChar()
@@ -1267,10 +1267,10 @@ interface Json : JsonSerializable {
               are gonna become a performance bottleneck. The markSuported() method
               is a good indicator.
              */
-            if (reader.markSupported()) {
-                this.reader = reader
+            if (input.markSupported()) {
+                this.reader = input
             } else {
-                this.reader = BufferedReader(reader)
+                this.reader = BufferedReader(input)
             }
         }
     }
@@ -1463,26 +1463,26 @@ interface Json : JsonSerializable {
          * @throws JsonException if parsing fails
          */
         @Throws(JsonException::class)
-        fun parse(content: String?): Json? {
+        fun parse(content: String): Json {
             return Parser(content).parse()
         }
 
         /**
          * Parse a JSON stream into a JSON container
-         * @param reader JSON content reader
+         * @param input JSON content reader
          * @return parsed json
          * @throws JsonException if parsing fails
          */
         @Throws(JsonException::class)
-        fun parse(reader: Reader?): Json? {
-            return Parser(reader).parse()
+        fun parse(input: Input): Json {
+            return Parser(input).parse()
         }
 
         /** creates a new Json.Object
          *
          * @return new Json.Object
          */
-        fun newObject(vararg elements: Serializable?): Object? {
+        fun newObject(vararg elements: JsonSerializable?): Object? {
             return Object(*elements)
         }
 
@@ -1490,7 +1490,7 @@ interface Json : JsonSerializable {
          *
          * @return new Json.Object
          */
-        fun newArray(vararg elements: Serializable?): Array? {
+        fun newArray(vararg elements: JsonSerializable?): Array? {
             return Array(*elements)
         }
 
@@ -1501,7 +1501,7 @@ interface Json : JsonSerializable {
          * @throws JsonException if parsing fails
          */
         @Throws(JsonException::class)
-        fun parseValue(content: String?): Serializable? {
+        fun parseValue(content: String?): JsonSerializable? {
             return Parser(content).parseValue(true)
         }
 
@@ -1512,7 +1512,7 @@ interface Json : JsonSerializable {
          * @throws JsonException if parsing fails
          */
         @Throws(JsonException::class)
-        fun parseValue(reader: Reader?): Serializable? {
+        fun parseValue(reader: Reader?): JsonSerializable? {
             return Parser(reader).parseValue(true)
         }
 

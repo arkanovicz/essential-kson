@@ -1,68 +1,51 @@
-buildscript {
-    repositories {
-        gradlePluginPortal()
-        jcenter()
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.10")
-        classpath("com.android.tools.build:gradle:4.0.1")
-    }
-}
-
 plugins {
-    kotlin("multiplatform") version "1.4.10" // TODO factorize version
-    id("com.android.library")
-    id("kotlin-android-extensions")
+    kotlin("multiplatform") version "1.4.10"
+    id("org.jetbrains.dokka") version "1.4.0"
+    // id("com.jfrog.artifactory") version "4.17.2"
+    // `maven-publish`
 }
 
-group = "com.republicate"
-version = "1.0-SNAPSHOT"
+apply("versions.gradle.kts")
+
+group = "com.republicate.json"
+version = "1.0" + (if (System.getProperty("snapshot")?.toBoolean() == true) "-SNAPSHOT" else "")
 
 repositories {
-    gradlePluginPortal()
-    google()
     jcenter()
     mavenCentral()
 }
+
 kotlin {
-    android()
-    ios {
-        binaries {
-            framework {
-                baseName = "shared"
-            }
-        }
-    }
-    jvm() {
-        val main by compilations.getting {
+    // explicitApi()
+    jvm {
+        compilations.all {
+            // kotlin compiler compatibility options
             kotlinOptions {
-                java {
-                    sourceCompatibility = org.gradle.api.JavaVersion.VERSION_1_8
-                    targetCompatibility = org.gradle.api.JavaVersion.VERSION_1_8
-                }
+                apiVersion = "1.4"
+                languageVersion = "1.4"
             }
         }
     }
-    js() {
+    js(BOTH) {
         browser {
             testTask {
                 useKarma {
-                    useFirefox()
-                    // useChrome()
-                    // useSafari()
+                    useChromeHeadless()
                 }
             }
         }
+        nodejs()
     }
+
+    linuxX64("linuxX64")
+    macosX64("macosX64")
+    mingwX64("mingwX64")
 
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api("io.github.microutils:kotlin-logging:2.0.3")
-                api("org.jetbrains.kotlinx:kotlinx-io:0.1.16")
-                //implementation("io.github.microutils:kotlin-logging-metadata:2.0.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-io:0.1.16")
+                implementation("io.github.microutils:kotlin-logging:2.0.3")
             }
         }
         val commonTest by getting {
@@ -71,75 +54,166 @@ kotlin {
                 implementation(kotlin("test-annotations-common"))
             }
         }
-        val androidMain by getting {
-            dependencies {
-                implementation("com.google.android.material:material:1.2.0")
-                implementation("org.slf4j:slf4j-api:1.7.30")
-                implementation("org.slf4j:slf4j-android:1.7.30")
-                implementation("io.github.microutils:kotlin-logging-jvm:2.0.3")
-            }
-        }
-        val androidTest by getting {
-            dependencies {
-                implementation(kotlin("test-junit"))
-                implementation("junit:junit:4.12")
-            }
-        }
-        val iosMain by getting
-        val iosTest by getting
         val jvmMain by getting {
             dependencies {
-                implementation(kotlin("stdlib-jdk8"))
-                implementation("org.slf4j:slf4j-api:1.7.30")
-                implementation("org.slf4j:slf4j-android:1.7.30")
-                implementation("io.github.microutils:kotlin-logging-jvm:2.0.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-io-jvm:0.1.16")
+                api("org.slf4j:slf4j-api:${extra["slf4j_version"]}")
             }
         }
         val jvmTest by getting {
             dependencies {
+                implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
+                implementation("junit:junit:${extra["junit_version"]}")
+                /*
+                implementation("org.mockito:mockito-all:${extra["mockito_version"]}")
+                implementation("org.apache.logging.log4j:log4j-api:${extra["log4j_version"]}")
+                implementation("org.apache.logging.log4j:log4j-core:${extra["log4j_version"]}")
+                implementation("org.apache.logging.log4j:log4j-slf4j-impl:${extra["log4j_version"]}")
+                 */
             }
         }
         val jsMain by getting {
             dependencies {
-                implementation(kotlin("stdlib-js"))
-                implementation("io.github.microutils:kotlin-logging-js:2.0.3")
-            }
+                implementation("org.jetbrains.kotlinx:kotlinx-io-js:0.1.16")
+                api("org.slf4j:slf4j-api:${extra["slf4j_version"]}")
+            }            
         }
         val jsTest by getting {
             dependencies {
                 implementation(kotlin("test-js"))
             }
         }
-    }
-}
-android {
-    compileSdkVersion(29)
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    defaultConfig {
-        minSdkVersion(24)
-        targetSdkVersion(29)
-        versionCode = 1
-        versionName = "1.0"
-    }
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
+        val nativeMain by creating {
+            dependsOn(commonMain)
+        }
+        val linuxX64Main by getting {
+            dependsOn(nativeMain)
+        }
+        val mingwX64Main by getting {
+            dependsOn(nativeMain)
+        }
+        val macosX64Main by getting {
+            dependsOn(nativeMain)
         }
     }
 }
-/* not working
-val packForXcode by tasks.creating(Sync::class) {
-    group = "build"
-    val mode = System.getenv("CONFIGURATION") ?: "DEBUG"
-    val sdkName = System.getenv("SDK_NAME") ?: "iphonesimulator"
-    val targetName = "ios" + if (sdkName.startsWith("iphoneos")) "Arm64" else "X64"
-    val framework = kotlin.targets.getByName<KotlinNativeTarget>(targetName).binaries.getFramework(mode)
-    inputs.property("mode", mode)
-    dependsOn(framework.linkTask)
-    val targetDir = File(buildDir, "xcode-frameworks")
-    from({ framework.outputDirectory })
-    into(targetDir)
+
+tasks {
+    register<Jar>("dokkaJar") {
+        from(dokkaHtml)
+        dependsOn(dokkaHtml)
+        archiveClassifier.set("javadoc")
+    }
 }
-tasks.getByName("build").dependsOn(packForXcode)
+
+/*
+publishing {
+    publications.withType<MavenPublication> {
+        pom {
+            name.set("essential-kson")
+            description.set("essential-kson $version - Lightweight JSON library for Kotlin")
+            //url.set("https://github.com/MicroUtils/kotlin-logging")
+            licenses {
+                license {
+                    name.set("The Apache Software License, Version 2.0")
+                    url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                }
+            }
+            developers {
+                developer {
+                    name.set("Claude Brisson")
+                    email.set("claude.brisson@gmail.com")
+                    organization.set("github")
+                    organizationUrl.set("http://www.github.com")
+                }
+            }
+            scm {
+                connection.set("scm:git:git://github.com/MicroUtils/kotlin-logging.git")
+                developerConnection.set("scm:git:ssh://github.com:MicroUtils/kotlin-logging.git")
+                url.set("http://github.com/MicroUtils/kotlin-logging/tree/master")
+            }
+        }
+        artifact(tasks["dokkaJar"])
+    }
+}
+*/
+
+/*
+publishing {
+    val bintrayOrg = "microutils"
+    val bintrayRepo = "kotlin-logging"
+    val bintrayUser = System.getProperty("bintray.user")
+    val bintrayApiKey = System.getProperty("bintray.key")
+
+    if (bintrayUser != null && bintrayApiKey != null) {
+        repositories {
+            maven {
+                name = "bintray"
+                url = uri(
+                    "https://api.bintray.com/maven/$bintrayOrg/$bintrayRepo/${project.name}/;publish=1;override=1"
+                )
+                credentials {
+                    username = bintrayUser
+                    password = bintrayApiKey
+                }
+            }
+        }
+    }
+}
+*/
+
+//bintray {
+//    user = System.getProperty("bintray.user")
+//    key = System.getProperty("bintray.key") //https://bintray.com/profile/edit
+//    setPublications(*publishing.publications.names.toTypedArray())
+//    publish = true //[Default: false] Whether version should be auto published after an upload
+//    pkg.apply {
+//        repo = "kotlin-logging"
+//        name = "kotlin-logging"
+//        userOrg = "microutils"
+//        setLicenses("Apache-2.0")
+//        vcsUrl = "https://github.com/MicroUtils/kotlin-logging"
+//        websiteUrl = "https://github.com/MicroUtils/kotlin-logging"
+//        issueTrackerUrl = "https://github.com/MicroUtils/kotlin-logging/issues"
+//
+//        githubRepo = "MicroUtils/kotlin-logging"
+//        githubReleaseNotesFile = "ChangeLog.md"
+//        version.apply {
+//            name = "${project.version}"
+//            desc = "kotlin-logging - Lightweight logging framework for Kotlin"
+//            released = "${Date()}"
+//            gpg.sign = true //Determines whether to GPG sign the files. The default is false
+//            mavenCentralSync.apply {
+//                sync = true //[Default: true] Determines whether to sync the version to Maven Central.
+//                user = System.getProperty("maven.user") //OSS user token: mandatory
+//                password = System.getProperty("maven.password") //OSS user password: mandatory
+//                close =
+//                    "1" //Optional property. By default the staging repository is closed and artifacts are released to Maven Central. You can optionally turn this behaviour off (by puting 0 as value) and release the version manually.
+//            }
+//        }
+//    }
+//}
+
+/*
+artifactory {
+    setContextUrl("http://oss.jfrog.org")
+    publish(delegateClosureOf<org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig> {
+        repository(delegateClosureOf<groovy.lang.GroovyObject> {
+            setProperty("repoKey", "oss-snapshot-local")
+            setProperty("username", System.getProperty("bintray.user"))
+            setProperty("password", System.getProperty("bintray.key"))
+            setProperty("maven", true)
+        })
+        defaults(delegateClosureOf<groovy.lang.GroovyObject> {
+            invokeMethod("publications", publishing.publications.names.toTypedArray())
+            setProperty("publishArtifacts", true)
+            setProperty("publishPom", true)
+        })
+    })
+    resolve(delegateClosureOf<org.jfrog.gradle.plugin.artifactory.dsl.ResolverConfig> {
+        setProperty("repoKey", "jcenter")
+    })
+    clientConfig.info.buildNumber = System.getProperty("build.number")
+}
 */
