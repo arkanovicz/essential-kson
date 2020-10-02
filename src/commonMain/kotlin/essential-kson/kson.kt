@@ -18,12 +18,13 @@ package com.republicate.json
  * under the License.
  */
 
-import kotlin.Exception
 import kotlinx.io.Input
 import kotlinx.io.Output
 import mu.KotlinLogger
 
 expect interface JsonSerializable
+
+private val logger = KotlinLogging.logger {}
 
 class JsonException(message: String?, cause: Throwable?) : Exception(message, cause)
 
@@ -91,8 +92,8 @@ interface Json : JsonSerializable {
     fun isEmpty(): Boolean
 
     /**
-     * Writes a representation of this container to the specified writer.
-     * @param writer target writer
+     * Writes a representation of this container to the specified output.
+     * @param output target writer
      * @return input writer
      * @throws JsonException if serialization failes
      */
