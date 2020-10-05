@@ -1,3 +1,9 @@
+repositories {
+    jcenter()
+    mavenCentral()
+    mavenLocal() // for kotlinx-io:0.2.0
+}
+
 plugins {
     kotlin("multiplatform") version "1.4.10"
     id("org.jetbrains.dokka") version "1.4.0"
@@ -10,9 +16,22 @@ apply("versions.gradle.kts")
 group = "com.republicate.json"
 version = "1.0" + (if (System.getProperty("snapshot")?.toBoolean() == true) "-SNAPSHOT" else "")
 
-repositories {
-    jcenter()
-    mavenCentral()
+// fails with message: Unresolved reference: compile
+// dependencies {
+//     compile("org.jetbrains.kotlinx:kotlinx-io:0.1.16")
+// }
+// 
+
+// same
+// subprojects {
+//     dependencies {
+//         compile("org.jetbrains.kotlinx:kotlinx-io:0.1.16")
+//     }
+// }
+// 
+
+dependencies {
+    "commonMainImplementation"("org.jetbrains.kotlinx:kotlinx-io:0.1.16")
 }
 
 kotlin {
@@ -21,30 +40,44 @@ kotlin {
         compilations.all {
             // kotlin compiler compatibility options
             kotlinOptions {
-                apiVersion = "1.4"
-                languageVersion = "1.4"
+                jvmTarget = "1.8"
+                apiVersion = "1.8"
+                languageVersion = "1.8"
             }
         }
     }
-    js(BOTH) {
+    js(LEGACY) {
         browser {
             testTask {
                 useKarma {
                     useChromeHeadless()
+                    webpackConfig.cssSupport.enabled = true
                 }
             }
         }
-        nodejs()
+        // nodejs() what?!
     }
 
-    linuxX64("linuxX64")
-    macosX64("macosX64")
-    mingwX64("mingwX64")
+    // (wip) fails with: Cannot add a KotlinSourceSet with name 'nativeMain' as a KotlinSourceSet with that name already exists.
+//     val hostOs = System.getProperty("os.name")
+//     val isMingwX64 = hostOs.startsWith("Windows")
+//     val nativeTarget = when {
+//         hostOs == "Mac OS X" -> macosX64("native")
+//         hostOs == "Linux" -> linuxX64("native")
+//         isMingwX64 -> mingwX64("native")
+//         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
+//     }
+// 
+
+    // linuxX64("linuxX64")
+    // macosX64("macosX64")
+    // mingwX64("mingwX64")
 
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-io:0.1.16")
+                api("org.jetbrains.kotlinx:kotlinx-io:0.2.0")
+                api("io.github.gciatto:kt-math:0.2.2")
                 implementation("io.github.microutils:kotlin-logging:2.0.3")
             }
         }
@@ -56,13 +89,13 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-io-jvm:0.1.16")
+                // implementation("org.jetbrains.kotlinx:kotlinx-io-jvm:0.1.16") should not be needed
                 api("org.slf4j:slf4j-api:${extra["slf4j_version"]}")
             }
         }
         val jvmTest by getting {
             dependencies {
-                implementation(kotlin("test"))
+                // implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
                 implementation("junit:junit:${extra["junit_version"]}")
                 /*
@@ -75,7 +108,7 @@ kotlin {
         }
         val jsMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-io-js:0.1.16")
+                // implementation("org.jetbrains.kotlinx:kotlinx-io-js:0.1.16") should not be needed
                 api("org.slf4j:slf4j-api:${extra["slf4j_version"]}")
             }            
         }
@@ -84,6 +117,8 @@ kotlin {
                 implementation(kotlin("test-js"))
             }
         }
+
+        /*
         val nativeMain by creating {
             dependsOn(commonMain)
         }
@@ -96,6 +131,7 @@ kotlin {
         val macosX64Main by getting {
             dependsOn(nativeMain)
         }
+        */
     }
 }
 
