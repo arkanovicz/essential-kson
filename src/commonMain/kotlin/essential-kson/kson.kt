@@ -19,20 +19,33 @@ package com.republicate.json
  */
 
 import kotlinx.io.ByteArrayOutput
+import kotlinx.io.EOFException
 import kotlinx.io.Input
 import kotlinx.io.Output
 import kotlinx.io.text.Charsets
+import kotlinx.io.text.readUtf8String
 import kotlinx.io.text.writeUtf8Char
 import kotlinx.io.text.writeUtf8String
+import mu.KotlinLogging
 import org.gciatto.kt.math.BigDecimal
 import org.gciatto.kt.math.BigInteger
-import mu.KotlinLogging
 
 expect interface JsonSerializable
 
 private val logger = KotlinLogging.logger {}
 
-class JsonException(message: String?, cause: Throwable?) : Exception(message, cause)
+fun Char.isISOControl() : Boolean {
+    val codePoint = this.toInt()
+    // Optimized form of:
+    //     (codePoint >= 0x00 && codePoint <= 0x1F) ||
+    //     (codePoint >= 0x7F && codePoint <= 0x9F);
+    return codePoint <= 0x9F &&
+            (codePoint >= 0x7F || codePoint ushr 5 === 0)
+}
+
+fun Char.isDigit() : Boolean = this in '0'..'9'
+
+class JsonException(message: String?, cause: Throwable? = null) : Exception(message, cause)
 
 /*****************************************************************
  *
@@ -132,7 +145,7 @@ interface Json : JsonSerializable {
 
     /**
      * deep-clone object
-     * @return deep-cloned object
+         * @return deep-cloned object
      */
     fun clone(): Any
 
@@ -242,18 +255,13 @@ interface Json : JsonSerializable {
                     else -> null
                 }
 
-        /*****************************************************************
-         *
-         * Json static members and methods
-         *
-         */
         /**
          * Indentation
          */
         const val INDENTATION = "  "
     }
 
-    /*****************************************************************
+    /**
      *
      * Json.Array
      *
@@ -563,7 +571,7 @@ interface Json : JsonSerializable {
         }
     }
 
-    /*****************************************************************
+    /**
      *
      * Json.Object
      *
@@ -878,7 +886,7 @@ interface Json : JsonSerializable {
     /**
      * The Serializer class gathers static methods for JSON containers serialization.
      */
-    internal object Serializer {
+    private object Serializer {
         private val ESCAPED_CHARS: kotlin.Array<String?>
 
         /**
@@ -961,33 +969,36 @@ interface Json : JsonSerializable {
             ESCAPED_CHARS['\f'.toInt()] = "\\f"
         }
     }
-    /*****************************************************************
-     *
-     * Parser
-     *
-     */
+
     /**
      * JSON parser.
      */
-    private class Parser private constructor(val input: Input) {
+    private class Parser(input: Input) {
+
+        companion object {
+            private const val MIN_LONG_DECILE = Long.MIN_VALUE / 10
+            private const val EOF = -1.toChar()
+
+        }
+
+
+        private val input = SequentialUTF8CharInput(input)
         private var row = 1
         private var col = 0
-        private var ch = 0
+        private var ch : Char = 0 as Char
         private var prefetch = false
-        private var prefetched = 0
+        private var prefetched : Char = 0 as Char
         private val buffer = CharArray(1024)
         private var pos = 0
 
-        private constructor(content: String) : this(FastStringReader(content)) {}
-
         @Throws(JsonException::class)
-        private operator fun next(): Int {
+        private operator fun next(): Char {
             if (prefetch) {
                 ch = prefetched
                 prefetch = false
             } else {
-                ch = reader!!.read()
-                if (ch == '\n'.toInt()) {
+                ch = input.readUTF8Char()
+                if (ch == '\n') {
                     ++row
                     col = 0
                 } else {
@@ -1011,7 +1022,7 @@ interface Json : JsonSerializable {
             var ret: Json? = null
             skipWhiteSpace()
             when (ch) {
-                -1 -> {
+                EOF -> {
                 }
                 '{' -> ret = parseObject()
                 '[' -> ret = parseArray()
@@ -1019,7 +1030,7 @@ interface Json : JsonSerializable {
             }
             if (ret != null) {
                 skipWhiteSpace()
-                if (ch != -1) {
+                if (ch != EOF) {
                     throw error("expecting end of stream")
                 }
             }
@@ -1028,24 +1039,22 @@ interface Json : JsonSerializable {
 
         @Throws(JsonException::class)
         private fun skipWhiteSpace() {
-            while (Char.isWhitespace(next())) {
+            while (next().isWhitespace()) {
             }
         }
 
         private fun error(msg: String): JsonException {
             var msg = msg
             msg = "JSON parsing error at line $row, column $col: $msg"
-            logger.error(msg)
+            logger.error { msg }
             return JsonException(msg)
         }
 
-        private fun display(c: Int): String {
-            return if (c == -1) {
-                "end of stream"
-            } else if (Character.isISOControl(c)) {
-                "0x" + Integer.toHexString(c)
-            } else {
-                return c as Char.toString()
+        private fun display(c: Char): String {
+            return when {
+                c == EOF -> "end of stream"
+                c.isISOControl() -> "0x${c.toLong().toString(16)}"
+                else -> "$c"
             }
         }
 
@@ -1053,15 +1062,14 @@ interface Json : JsonSerializable {
         private fun parseArray(): Array {
             val ret = Array()
             skipWhiteSpace()
-            if (ch != ']'.toInt()) {
+            if (ch != ']') {
                 back()
                 main@ while (true) {
                     ret.add(parseValue())
                     skipWhiteSpace()
                     when (ch) {
                         ']' -> break@main
-                        ',' -> {
-                        }
+                        ',' -> {}
                         else -> throw error("expecting ',' or ']', got: '" + display(ch) + "'")
                     }
                 }
@@ -1073,26 +1081,19 @@ interface Json : JsonSerializable {
         private fun parseObject(): Object {
             val ret = Object()
             skipWhiteSpace()
-            if (ch != '}'.toInt()) {
+            if (ch != '}') {
                 main@ while (true) {
-                    if (ch != '"'.toInt()) {
-                        throw error("expecting key string, got: '" + display(ch) + "'")
-                    }
+                    if (ch != '"') throw error("expecting key string, got: '" + display(ch) + "'")
                     val key = parseString()
                     skipWhiteSpace()
-                    if (ch != ':'.toInt()) {
-                        throw error("expecting ':', got: '" + display(ch) + "'")
-                    }
+                    if (ch != ':') throw error("expecting ':', got: '" + display(ch) + "'")
                     val value = parseValue()
                     val previous = ret.put(key, value)
-                    if (previous != null) {
-                        logger.warn("key '{}' is not unique at line {}, column {}", key, row, col)
-                    }
+                    if (previous != null) logger.warn { "key '$key' is not unique at line $row, column $col" }
                     skipWhiteSpace()
                     when (ch) {
                         '}' -> break@main
-                        ',' -> {
-                        }
+                        ',' -> {}
                         else -> throw error("expecting ',' or '}', got: '" + display(ch) + "'")
                     }
                     skipWhiteSpace()
@@ -1105,10 +1106,8 @@ interface Json : JsonSerializable {
         private fun parseValue(complete: Boolean = false): JsonSerializable? {
             var ret: JsonSerializable? = null
             skipWhiteSpace()
-            if (ch == -1) {
-                throw error("unexpecting end of stream")
-            }
             when (ch) {
+                EOF -> throw error("unexpecting end of stream")
                 '"' -> ret = parseString()
                 '[' -> ret = parseArray()
                 '{' -> ret = parseObject()
@@ -1116,13 +1115,11 @@ interface Json : JsonSerializable {
                 'f' -> ret = parseKeyword("false", false)
                 'n' -> ret = parseKeyword("null", null)
                 '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> ret = parseNumber()
-                -1 -> {
-                }
                 else -> throw error("unexpected chararcter: '" + display(ch) + "'")
             }
             if (complete) {
                 skipWhiteSpace()
-                if (ch != -1) {
+                if (ch != EOF) {
                     throw error("expecting end of stream")
                 }
             }
@@ -1135,12 +1132,9 @@ interface Json : JsonSerializable {
                 if (i > 0) {
                     next()
                 }
-                if (ch != keyword[i].toInt()) {
-                    if (ch == -1) {
-                        throw JsonException("encountered end of stream while parsing keyword '$keyword'")
-                    } else {
-                        throw JsonException("invalid character '" + display(ch) + "' while parsing keyword '" + keyword + "'")
-                    }
+                if (ch != keyword[i]) {
+                    if (ch == EOF) throw JsonException("encountered end of stream while parsing keyword '$keyword'")
+                    else throw JsonException("invalid character '" + display(ch) + "' while parsing keyword '" + keyword + "'")
                 }
             }
             return value
@@ -1153,45 +1147,40 @@ interface Json : JsonSerializable {
             var builder: StringBuilder? = null
             while (true) {
                 while (pos < buffer.size) {
-                    buffer[pos++] = next().toChar()
-                    if (ch == '"'.toInt()) {
-                        return if (builder == null) {
-                            String(buffer, 0, pos - 1)
-                        } else {
-                            builder.append(buffer, 0, pos - 1)
-                            builder.toString()
-                        }
-                    } else if (ch == '\\'.toInt()) {
+                    buffer[pos++] = next()
+                    if (ch == '"') {
+                        return builder?.append(buffer, 0, pos - 1)?.toString() ?: String(buffer, 0, pos - 1)
+                    } else if (ch == '\\') {
                         if (builder == null) {
                             builder = StringBuilder(Math.max(2 * pos, 16))
                         }
-                        builder.append(buffer, 0, pos - 1)
+                        builder!!.append(buffer, 0, pos - 1)
                         pos = 0
                         var c = parseEscapeSequence()
                         builder.append(c)
-                        if (Character.isHighSurrogate(c)) {
+                        if (c.isHighSurrogate()) {
                             ch = next()
-                            if (ch != '\\'.toInt()) {
+                            if (ch != '\\') {
                                 throw error("low surrogate escape sequence expected")
                             }
                             c = parseEscapeSequence()
                             builder.append(c)
-                            if (!Character.isLowSurrogate(c)) {
+                            if (!c.isLowSurrogate()) {
                                 throw error("low surrogate escape sequence expected")
                             }
-                        } else if (Character.isLowSurrogate(c)) {
+                        } else if (c.isLowSurrogate()) {
                             throw error("lone low surrogate escape sequence unexpected")
                         }
-                    } else if (ch == -1) {
+                    } else if (ch == EOF) {
                         throw error("unterminated string")
-                    } else if (ch < 0x20) {
+                    } else if (ch < ' ') {
                         throw error("unescaped control character")
                     }
                 }
                 if (builder == null) {
                     builder = StringBuilder(Math.max(2 * pos, 16))
                 }
-                builder.append(buffer, 0, pos)
+                builder!!.append(buffer, 0, pos)
                 pos = 0
             }
         }
@@ -1199,22 +1188,21 @@ interface Json : JsonSerializable {
         @Throws(JsonException::class)
         private fun parseEscapeSequence(): Char {
             return when (next()) {
-                -1 -> throw error("unterminated escape sequence")
+                EOF -> throw error("unterminated escape sequence")
                 'u' -> {
                     var result = 0.toChar()
                     var i = 0
                     while (i < 4) {
-                        if (next() == -1) {
+                        if (next() == EOF) {
                             throw error("unterminated escape sequence")
                         }
-                        val c = ch.toChar()
                         result = (result.toInt() shl 4).toChar()
-                        if (c >= '0' && c <= '9') {
-                            result += c - '0'
-                        } else if (c >= 'a' && c <= 'f') {
-                            result += c - 'a' + 10.toChar()
-                        } else if (c >= 'A' && c <= 'F') {
-                            result += c - 'A' + 10.toChar()
+                        if (ch >= '0' && ch <= '9') {
+                            result += ch - '0'
+                        } else if (ch >= 'a' && ch <= 'f') {
+                            result += ch - 'a' + 10
+                        } else if (ch >= 'A' && ch <= 'F') {
+                            result += ch - 'A' + 10
                         } else {
                             throw error("malformed escape sequence")
                         }
@@ -1235,10 +1223,10 @@ interface Json : JsonSerializable {
         }
 
         @Throws(JsonException::class)
-        private fun parseNumber(): Number {
+        private fun parseNumber(): Any? {
             // inspired from com.google.gson.stream.JsonReader, but much more readable
             // and handle Double/BigDecimal alternatives
-            val number: Number
+            val number: Any
             pos = 0
             var digits = 0
             var negative = false
@@ -1247,24 +1235,24 @@ interface Json : JsonSerializable {
             var fitsInDouble = true
             var negValue: Long = 0
             // sign
-            if (ch == '-'.toInt()) {
+            if (ch == '-') {
                 negative = true
                 buffer[pos++] = ch.toChar()
-                if (next() == -1) {
+                if (next() == EOF) {
                     throw error("malformed number")
                 }
             }
             // mantissa
             digits += readDigits(false)
             // fractional part
-            if (ch == '.'.toInt()) {
+            if (ch == '.') {
                 decimal = true
                 buffer[pos++] = ch.toChar()
-                if (next() == -1) {
+                if (next() == EOF) {
                     throw error("malformed number")
                 }
                 digits += readDigits(true)
-            } else if (ch != 'e'.toInt() && ch != 'E'.toInt()) {
+            } else if (ch != 'e' && ch != 'E') {
                 // check if number fits in long
                 var i = if (negative) 1 else 0
                 negValue = -(buffer[i++] - '0').toLong()
@@ -1283,18 +1271,18 @@ interface Json : JsonSerializable {
                 fitsInDouble = false
             }
             // exponent
-            if (ch == 'e'.toInt() || ch == 'E'.toInt()) {
+            if (ch == 'e' || ch == 'E') {
                 decimal = true
-                buffer[pos++] = ch.toChar()
-                if (next() == -1) {
+                buffer[pos++] = ch
+                if (next() == EOF) {
                     throw error("malformed number")
                 }
                 if (pos == buffer.size) {
                     throw error("number is too long at my taste")
                 }
-                if (ch == '+'.toInt() || ch == '-'.toInt()) {
-                    buffer[pos++] = ch.toChar()
-                    if (next() == -1) {
+                if (ch == '+' || ch == '-') {
+                    buffer[pos++] = ch
+                    if (next() == EOF) {
                         throw error("malformed number")
                     }
                 }
@@ -1306,15 +1294,15 @@ interface Json : JsonSerializable {
             }
             number =
                     if (!decimal && fitsInLong && (negative || negValue != Long.MIN_VALUE) && (!negative || negValue != 0L)) {
-                        java.lang.Long.valueOf(if (negative) negValue else -negValue)
+                        if (negative) negValue else -negValue
                     } else {
                         val strBuff = String(buffer, 0, pos)
                         if (!decimal) {
                             BigInteger(strBuff)
                         } else if (fitsInDouble) {
-                            java.lang.Double.valueOf(strBuff)
+                            strBuff.toDouble()
                         } else {
-                            BigDecimal(strBuff)
+                            BigDecimal.of(strBuff)
                         }
                     }
             // we always end up reading one more character
@@ -1326,7 +1314,7 @@ interface Json : JsonSerializable {
         private fun readDigits(zeroFirstAllowed: Boolean): Int {
             var len = 0
             while (pos < buffer.size) {
-                if (!Char.isDigit(ch)) {
+                if (!ch.isDigit()) {
                     break
                 }
                 buffer[pos++] = ch.toChar()
@@ -1341,24 +1329,8 @@ interface Json : JsonSerializable {
             }
             return len
         }
-
-        companion object {
-            private const val MIN_LONG_DECILE = Long.MIN_VALUE / 10
-        }
-
-        init {
-            /*
-              We need a reader that has an internal buffer otherwise read() calls
-              are gonna become a performance bottleneck. The markSuported() method
-              is a good indicator.
-             */
-            if (input.markSupported()) {
-                this.reader = input
-            } else {
-                this.reader = BufferedReader(input)
-            }
-        }
     }
+
     /*****************************************************************
      *
      * Helpers
@@ -1474,6 +1446,31 @@ interface Json : JsonSerializable {
             return if (value == null || value is ByteArray) {
                 value as ByteArray?
             } else value.toString().toByteArray(Charsets.UTF_8)
+        }
+    }
+
+    /**
+     * CharInput : Input with ability to read chars one by one
+     */
+    private class SequentialUTF8CharInput(val input: Input) {
+
+        private var bufferedString : String? = null;
+        private var index = 0
+
+        fun readUTF8Char() : Char {
+            if (bufferedString == null) {
+                try {
+                    bufferedString = input.readUtf8String()
+                    index = 0
+                } catch (eofe: EOFException) {
+                    return -1 as Char
+                }
+            }
+            val ret = bufferedString!![index++]
+            if (index == bufferedString!!.length) {
+                bufferedString = null
+            }
+            return ret
         }
     }
 }
