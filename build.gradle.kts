@@ -2,6 +2,7 @@ repositories {
     jcenter()
     mavenCentral()
     mavenLocal() // for kotlinx-io:0.2.0
+    maven(url = "https://kotlin.bintray.com/kotlinx/") // for kotlinx-datetime:0.1.0
 }
 
 plugins {
@@ -76,6 +77,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                api("org.jetbrains.kotlinx:kotlinx-datetime:0.1.0")
                 api("org.jetbrains.kotlinx:kotlinx-io:0.2.0")
                 api("io.github.gciatto:kt-math:0.2.2")
                 implementation("io.github.microutils:kotlin-logging:2.0.3")

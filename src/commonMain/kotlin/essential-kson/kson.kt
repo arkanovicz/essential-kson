@@ -18,11 +18,13 @@ package com.republicate.json
  * under the License.
  */
 
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.Instant
 import kotlinx.io.ByteArrayOutput
 import kotlinx.io.EOFException
 import kotlinx.io.Input
 import kotlinx.io.Output
-import kotlinx.io.text.Charsets
 import kotlinx.io.text.readUtf8String
 import kotlinx.io.text.writeUtf8Char
 import kotlinx.io.text.writeUtf8String
@@ -477,21 +479,30 @@ interface Json {
         }
 
         /**
-         * Returns the element at the specified position as a Date value.
+         * Returns the element at the specified position as an Instant value.
          * @param  index index of the element to return
-         * @return the element at the specified position as a Date value
+         * @return the element at the specified position as an Instant value
          */
-        fun getDate(index: Int): Date {
-            return TypeUtils.toDate(get(index))
+        fun getInstant(index: Int): Instant? {
+            return TypeUtils.toInstant(get(index))
         }
 
         /**
-         * Returns the element at the specified position as a Calendar value.
+         * Returns the element at the specified position as a LocalDateTime value.
          * @param  index index of the element to return
-         * @return the element at the specified position as a Calendar value
+         * @return the element at the specified position as a LocalDateTime value
          */
-        fun getCalendar(index: Int): Calendar {
-            return TypeUtils.toCalendar(get(index))
+        fun getLocalDatetIME(index: Int): LocalDateTime? {
+            return TypeUtils.toLocalDateTime(get(index))
+        }
+
+        /**
+         * Returns the element at the specified position as a LocalDate value.
+         * @param  index index of the element to return
+         * @return the element at the specified position as a LocalDate value
+         */
+        fun getLocalDate(index: Int): LocalDate? {
+            return TypeUtils.toLocalDate(get(index))
         }
 
         /**
@@ -797,21 +808,30 @@ interface Json {
         }
 
         /**
-         * Returns the element under the specified key as a Date value.
+         * Returns the element under the specified key as an Instant value.
          * @param  key key of the element to return
-         * @return the element under the specified key as a Date value or null if the key doesn't exist
+         * @return the element at the specified position as an Instant value
          */
-        fun getDate(key: String): Date {
-            return TypeUtils.toDate(get(key))
+        fun getInstant(key: String): Instant? {
+            return TypeUtils.toInstant(get(key))
         }
 
         /**
-         * Returns the element under the specified key as a Calendar value.
+         * Returns the element under the specified key as a LocalDateTime value.
          * @param  key key of the element to return
-         * @return the element under the specified key as a Calendar value or null if the key doesn't exist
+         * @return the element at the specified position as a LocalDateTime value
          */
-        fun getCalendar(key: String): Calendar {
-            return TypeUtils.toCalendar(get(key))
+        fun getLocalDatetIME(key: String): LocalDateTime? {
+            return TypeUtils.toLocalDateTime(get(key))
+        }
+
+        /**
+         * Returns the element under the specified key as a LocalDate value.
+         * @param  key key of the element to return
+         * @return the element at the specified position as a LocalDate value
+         */
+        fun getLocalDate(key: String): LocalDate? {
+            return TypeUtils.toLocalDate(get(key))
         }
 
         /**
@@ -1424,27 +1444,29 @@ interface Json {
             }
 
 
-        fun toDate(value: Any?): Date? {
-            if (value == null || value is Date) {
-                return value as Date?
+        fun toInstant(value: Any?): Instant? =
+            when(value) {
+                null -> null
+                is Instant -> value
+                is String -> Instant.parse(value)
+                else -> null
             }
-            return if (value is Calendar) {
-                value.time
-            } else null
-        }
 
-        fun toCalendar(value: Any?): Calendar? {
-            if (value == null || value is Calendar) {
-                return value as Calendar?
+        fun toLocalDateTime(value: Any?): LocalDateTime? =
+            when(value) {
+                null -> null
+                is LocalDateTime -> value
+                is String -> LocalDateTime.parse(value)
+                else -> null
             }
-            if (value is Date) {
-                // CB TODO - use model locale
-                val calendar = GregorianCalendar.getInstance()
-                calendar.time = value
-                return calendar
+
+        fun toLocalDate(value: Any?): LocalDate? =
+            when(value) {
+                null -> null
+                is LocalDate -> value
+                is String -> LocalDate.parse(value)
+                else -> null
             }
-            return null
-        }
 
         fun toBytes(value: Any?): ByteArray? {
             return if (value == null || value is ByteArray) {
