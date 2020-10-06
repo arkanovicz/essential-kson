@@ -43,7 +43,7 @@ fun Char.isISOControl() : Boolean {
     //     (codePoint >= 0x00 && codePoint <= 0x1F) ||
     //     (codePoint >= 0x7F && codePoint <= 0x9F);
     return codePoint <= 0x9F &&
-            (codePoint >= 0x7F || codePoint ushr 5 === 0)
+            (codePoint >= 0x7F || codePoint ushr 5 == 0)
 }
 
 fun Char.isDigit() : Boolean = this in '0'..'9'

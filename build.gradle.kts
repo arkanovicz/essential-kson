@@ -42,8 +42,8 @@ kotlin {
             // kotlin compiler compatibility options
             kotlinOptions {
                 jvmTarget = "1.8"
-                apiVersion = "1.8"
-                languageVersion = "1.8"
+                apiVersion = "1.4"
+                languageVersion = "1.4"
             }
         }
     }
@@ -51,7 +51,8 @@ kotlin {
         browser {
             testTask {
                 useKarma {
-                    useChromeHeadless()
+                    //useChromeHeadless()
+                    useFirefox()
                     webpackConfig.cssSupport.enabled = true
                 }
             }
