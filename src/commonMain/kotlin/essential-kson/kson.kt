@@ -29,6 +29,7 @@ import kotlinx.io.text.writeUtf8String
 import mu.KotlinLogging
 import org.gciatto.kt.math.BigDecimal
 import org.gciatto.kt.math.BigInteger
+import kotlin.math.max
 
 expect interface JsonSerializable
 
@@ -52,7 +53,7 @@ class JsonException(message: String?, cause: Throwable? = null) : Exception(mess
  * Json container
  *
  */
-interface Json : JsonSerializable {
+interface Json {
 
     /**
      * Check if the underlying container is a JSON array.
@@ -157,7 +158,7 @@ interface Json : JsonSerializable {
          * @throws JsonException if parsing fails
          */
         @Throws(JsonException::class)
-        fun parse(content: String): Json {
+        fun parse(content: String): Json? {
             return Parser(content).parse()
         }
 
@@ -168,7 +169,7 @@ interface Json : JsonSerializable {
          * @throws JsonException if parsing fails
          */
         @Throws(JsonException::class)
-        fun parse(input: Input): Json {
+        fun parse(input: Input): Json? {
             return Parser(input).parse()
         }
 
@@ -176,7 +177,7 @@ interface Json : JsonSerializable {
          *
          * @return new Json.Object
          */
-        fun newObject(vararg elements: JsonSerializable?): Object? {
+        fun newObject(vararg elements: Pair<String, Any?>): Object {
             return Object(*elements)
         }
 
@@ -184,7 +185,7 @@ interface Json : JsonSerializable {
          *
          * @return new Json.Object
          */
-        fun newArray(vararg elements: JsonSerializable?): Array? {
+        fun newArray(vararg elements: Any?): Array {
             return Array(*elements)
         }
 
@@ -195,7 +196,7 @@ interface Json : JsonSerializable {
          * @throws JsonException if parsing fails
          */
         @Throws(JsonException::class)
-        fun parseValue(content: String?): JsonSerializable? {
+        fun parseValue(content: String): Any? {
             return Parser(content).parseValue(true)
         }
 
@@ -206,7 +207,7 @@ interface Json : JsonSerializable {
          * @throws JsonException if parsing fails
          */
         @Throws(JsonException::class)
-        fun parseValue(reader: Reader?): JsonSerializable? {
+        fun parseValue(reader: Input): Any? {
             return Parser(reader).parseValue(true)
         }
 
@@ -216,8 +217,8 @@ interface Json : JsonSerializable {
          * @return escaped string
          */
         @Throws(JsonException::class)
-        fun escape(str: String?): String? {
-            return Serializer.escapeJson(str, StringWriter()).toString()
+        fun escape(str: String): String? {
+            return Serializer.escapeJson(str, ByteArrayOutput()).toString()
         }
 
         /**
@@ -236,7 +237,7 @@ interface Json : JsonSerializable {
          * @return converted object
          * @throws ClassCastException if input is not convertible to json
          */
-        fun toSerializable(obj: Any?): JsonSerializable? =
+        fun toSerializable(obj: Any?): Any? =
                 when (obj) {
                     is Map<*, *> -> {
                         val ret = Object()
@@ -266,7 +267,7 @@ interface Json : JsonSerializable {
      * Json.Array
      *
      */
-    class Array(val lst: MutableList<JsonSerializable?>) : Json, MutableList<JsonSerializable?> by lst {
+    class Array(private val lst: MutableList<Any?>) : Json, MutableList<Any?> by lst {
         /**
          * Builds an empty Json.Array.
          */
@@ -275,12 +276,12 @@ interface Json : JsonSerializable {
         /**
          * Builds a Json.Array with specified items
          */
-        constructor(vararg items: JsonSerializable?) : this(listOf(*items)) {}
+        constructor(vararg items: Any?) : this(listOf(*items))
 
         /**
          * Builds a Json.Array with the content of an existing collection.
          */
-        constructor(collection: Collection<JsonSerializable?>) : this(collection.toMutableList()) {}
+        constructor(collection: Collection<Any?>) : this(collection.toMutableList())
 
         /**
          * Check if the underlying container is an array.
@@ -314,7 +315,7 @@ interface Json : JsonSerializable {
 
         /**
          * Writes a representation of this container to the specified writer.
-         * @param writer target writer
+         * @param output target output
          */
         @Throws(JsonException::class)
         override fun toString(output: Output): Output {
@@ -531,7 +532,7 @@ interface Json : JsonSerializable {
          * @param elem element to add
          * @return the array
          */
-        fun push(elem: JsonSerializable?): Array {
+        fun push(elem: Any?): Array {
             add(elem)
             return this
         }
@@ -541,7 +542,7 @@ interface Json : JsonSerializable {
          * @param elems elements to add to set
          * @return the array
          */
-        fun pushAll(elems: Collection<JsonSerializable?>?): Array {
+        fun pushAll(elems: Collection<Any?>?): Array {
             addAll(elems!!)
             return this
         }
@@ -552,18 +553,19 @@ interface Json : JsonSerializable {
          * @param elem element to set
          * @return the array
          */
-        fun put(index: Int, elem: JsonSerializable?): Array {
+        fun put(index: Int, elem: Any?): Array {
             set(index, elem)
             return this
         }
 
         override fun clone(): Any {
-            val clone = super.clone() as Array
+            val myself = this
+            val clone = newArray().apply { addAll(myself) }
             for (i in clone.indices) {
                 // we make the assumption that an object is either Json or immutable (so already there)
                 var value = get(i)
                 if (value is Json) {
-                    value = value.clone() as JsonSerializable
+                    value = value.clone()
                     clone.put(i, value)
                 }
             }
@@ -576,8 +578,8 @@ interface Json : JsonSerializable {
      * Json.Object
      *
      */
-    class Object(val map: MutableMap<String, JsonSerializable?>) : Json, MutableMap<String, JsonSerializable?> by map,
-            Iterable<Map.Entry<String, JsonSerializable?>> {
+    class Object(private val map: MutableMap<String, Any?>) : Json, MutableMap<String, Any?> by map,
+            Iterable<Map.Entry<String, Any?>> {
         /**
          * Builds an emepty Json.Object.
          */
@@ -586,7 +588,7 @@ interface Json : JsonSerializable {
         /**
          * Builds a Json.Object with specified itemsas alternated keys and values
          */
-        constructor(vararg pairs: Pair<String, JsonSerializable?>) : this(mutableMapOf(*pairs)) {}
+        constructor(vararg pairs: Pair<String, Any?>) : this(mutableMapOf(*pairs))
 
         /**
          * Check if the underlying container is an array.
@@ -691,7 +693,7 @@ interface Json : JsonSerializable {
          *
          * @return an Iterator.
          */
-        override fun iterator(): Iterator<Map.Entry<String, JsonSerializable?>> {
+        override fun iterator(): Iterator<Map.Entry<String, Any?>> {
             return entries.iterator()
         }
 
@@ -851,7 +853,7 @@ interface Json : JsonSerializable {
          * @param elem element to set
          * @return the object
          */
-        operator fun set(key: String, elem: JsonSerializable?): Object {
+        operator fun set(key: String, elem: Any?): Object {
             put(key, elem)
             return this
         }
@@ -861,17 +863,18 @@ interface Json : JsonSerializable {
          * @param elems elements to add
          * @return the object
          */
-        fun setAll(elems: Map<out String, JsonSerializable?>): Object {
+        fun setAll(elems: Map<out String, Any?>): Object {
             putAll(elems)
             return this
         }
 
         override fun clone(): Any {
-            val clone = super.clone() as Object
+            val myself = this
+            val clone = newObject().apply { putAll(myself) }
             for (entry in entries) {
                 var value = entry.value
                 if (value is Json) {
-                    value = value.clone() as JsonSerializable
+                    value = value.clone()
                     entry.setValue(value)
                 }
             }
@@ -887,7 +890,7 @@ interface Json : JsonSerializable {
      * The Serializer class gathers static methods for JSON containers serialization.
      */
     private object Serializer {
-        private val ESCAPED_CHARS: kotlin.Array<String?>
+        private val ESCAPED_CHARS: kotlin.Array<String> = Array(128) { "" }
 
         /**
          * Escape a string for Json special characters towards
@@ -908,7 +911,7 @@ interface Json : JsonSerializable {
                 var escaped: String
                 if (c.toInt() < 128) {
                     escaped = ESCAPED_CHARS[c.toInt()]
-                    if (escaped == null) {
+                    if (escaped.isEmpty()) {
                         continue
                     }
                 } else if (c == '\u2028') {
@@ -937,7 +940,7 @@ interface Json : JsonSerializable {
          * @throws JsonException if serialization fails
          */
         @Throws(JsonException::class)
-        fun writeSerializable(serializable: JsonSerializable?, output: Output) {
+        fun writeSerializable(serializable: Any?, output: Output) {
             val str = when (serializable) {
                 is Boolean -> serializable.toString()
                 is Number -> {
@@ -956,9 +959,8 @@ interface Json : JsonSerializable {
         }
 
         init {
-            ESCAPED_CHARS = arrayOfNulls(128)
             for (i in 0..0x1f) {
-                ESCAPED_CHARS[i] = String.format("\\u%04x", i)
+                ESCAPED_CHARS[i] = "\\u${i.toString(16).padStart(4, '0')}"
             }
             ESCAPED_CHARS['"'.toInt()] = "\\\""
             ESCAPED_CHARS['\\'.toInt()] = "\\\\"
@@ -966,28 +968,35 @@ interface Json : JsonSerializable {
             ESCAPED_CHARS['\b'.toInt()] = "\\b"
             ESCAPED_CHARS['\n'.toInt()] = "\\n"
             ESCAPED_CHARS['\r'.toInt()] = "\\r"
-            ESCAPED_CHARS['\f'.toInt()] = "\\f"
+            // ESCAPED_CHARS['\f'.toInt()] = "\\f" // No form feed in kotlin
         }
     }
 
     /**
      * JSON parser.
      */
-    private class Parser(input: Input) {
+    private class Parser {
+
+        constructor (input : Input) {
+            this.input = SequentialUTF8CharInput(input)
+        }
+
+        constructor (source : String) {
+            this.input = StringUTF8CharInput(source)
+        }
 
         companion object {
-            private const val MIN_LONG_DECILE = Long.MIN_VALUE / 10
-            private const val EOF = -1.toChar()
+            const val MIN_LONG_DECILE = Long.MIN_VALUE / 10
+            const val EOF = (-1).toChar()
 
         }
 
-
-        private val input = SequentialUTF8CharInput(input)
+        private var input : UTF8CharInput
         private var row = 1
         private var col = 0
-        private var ch : Char = 0 as Char
+        private var ch : Char = 0.toChar()
         private var prefetch = false
-        private var prefetched : Char = 0 as Char
+        private var prefetched : Char = 0.toChar()
         private val buffer = CharArray(1024)
         private var pos = 0
 
@@ -1018,7 +1027,7 @@ interface Json : JsonSerializable {
         }
 
         @Throws(JsonException::class)
-        private fun parse(): Json? {
+        fun parse(): Json? {
             var ret: Json? = null
             skipWhiteSpace()
             when (ch) {
@@ -1043,9 +1052,8 @@ interface Json : JsonSerializable {
             }
         }
 
-        private fun error(msg: String): JsonException {
-            var msg = msg
-            msg = "JSON parsing error at line $row, column $col: $msg"
+        private fun error(message: String): JsonException {
+            val msg = "JSON parsing error at line $row, column $col: $message"
             logger.error { msg }
             return JsonException(msg)
         }
@@ -1103,18 +1111,17 @@ interface Json : JsonSerializable {
         }
 
         @Throws(JsonException::class)
-        private fun parseValue(complete: Boolean = false): JsonSerializable? {
-            var ret: JsonSerializable? = null
+        fun parseValue(complete: Boolean = false): Any? {
             skipWhiteSpace()
-            when (ch) {
+            val ret: Any? = when (ch) {
                 EOF -> throw error("unexpecting end of stream")
-                '"' -> ret = parseString()
-                '[' -> ret = parseArray()
-                '{' -> ret = parseObject()
-                't' -> ret = parseKeyword("true", true)
-                'f' -> ret = parseKeyword("false", false)
-                'n' -> ret = parseKeyword("null", null)
-                '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> ret = parseNumber()
+                '"' -> parseString()
+                '[' -> parseArray()
+                '{' -> parseObject()
+                't' -> parseKeyword("true", true)
+                'f' -> parseKeyword("false", false)
+                'n' -> parseKeyword("null", null)
+                '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> parseNumber()
                 else -> throw error("unexpected chararcter: '" + display(ch) + "'")
             }
             if (complete) {
@@ -1127,8 +1134,8 @@ interface Json : JsonSerializable {
         }
 
         @Throws(JsonException::class)
-        private fun parseKeyword(keyword: String, value: JsonSerializable?): JsonSerializable? {
-            for (i in 0 until keyword.length) {
+        private fun parseKeyword(keyword: String, value: Any?): Any? {
+            for (i in keyword.indices) {
                 if (i > 0) {
                     next()
                 }
@@ -1149,12 +1156,12 @@ interface Json : JsonSerializable {
                 while (pos < buffer.size) {
                     buffer[pos++] = next()
                     if (ch == '"') {
-                        return builder?.append(buffer, 0, pos - 1)?.toString() ?: String(buffer, 0, pos - 1)
+                        return builder?.append(buffer, 0, pos - 1)?.toString() ?: buffer.concatToString(0, pos - 1)
                     } else if (ch == '\\') {
                         if (builder == null) {
-                            builder = StringBuilder(Math.max(2 * pos, 16))
+                            builder = StringBuilder(max(2 * pos, 16))
                         }
-                        builder!!.append(buffer, 0, pos - 1)
+                        builder.append(buffer, 0, pos - 1)
                         pos = 0
                         var c = parseEscapeSequence()
                         builder.append(c)
@@ -1178,9 +1185,9 @@ interface Json : JsonSerializable {
                     }
                 }
                 if (builder == null) {
-                    builder = StringBuilder(Math.max(2 * pos, 16))
+                    builder = StringBuilder(max(2 * pos, 16))
                 }
-                builder!!.append(buffer, 0, pos)
+                builder.append(buffer, 0, pos)
                 pos = 0
             }
         }
@@ -1197,14 +1204,11 @@ interface Json : JsonSerializable {
                             throw error("unterminated escape sequence")
                         }
                         result = (result.toInt() shl 4).toChar()
-                        if (ch >= '0' && ch <= '9') {
-                            result += ch - '0'
-                        } else if (ch >= 'a' && ch <= 'f') {
-                            result += ch - 'a' + 10
-                        } else if (ch >= 'A' && ch <= 'F') {
-                            result += ch - 'A' + 10
-                        } else {
-                            throw error("malformed escape sequence")
+                        result += when (ch) {
+                            in '0'..'9' -> ch - '0'
+                            in 'a'..'f' -> ch - 'a' + 10
+                            in 'A'..'F' -> ch - 'A' + 10
+                            else -> throw error("malformed escape sequence")
                         }
                         ++i
                     }
@@ -1213,7 +1217,7 @@ interface Json : JsonSerializable {
                 't' -> '\t'
                 'b' -> '\b'
                 'n' -> '\n'
-                'f' -> '\f'
+                // 'f' -> '\f' // no form feed in kotlin
                 'r' -> '\r'
                 '"' -> '"'
                 '\\' -> '\\'
@@ -1247,7 +1251,7 @@ interface Json : JsonSerializable {
             // fractional part
             if (ch == '.') {
                 decimal = true
-                buffer[pos++] = ch.toChar()
+                buffer[pos++] = ch
                 if (next() == EOF) {
                     throw error("malformed number")
                 }
@@ -1296,7 +1300,7 @@ interface Json : JsonSerializable {
                     if (!decimal && fitsInLong && (negative || negValue != Long.MIN_VALUE) && (!negative || negValue != 0L)) {
                         if (negative) negValue else -negValue
                     } else {
-                        val strBuff = String(buffer, 0, pos)
+                        val strBuff = buffer.concatToString(0, pos)
                         if (!decimal) {
                             BigInteger(strBuff)
                         } else if (fitsInDouble) {
@@ -1445,25 +1449,29 @@ interface Json : JsonSerializable {
         fun toBytes(value: Any?): ByteArray? {
             return if (value == null || value is ByteArray) {
                 value as ByteArray?
-            } else value.toString().toByteArray(Charsets.UTF_8)
+            } else value.toString().encodeToByteArray()
         }
     }
 
     /**
      * CharInput : Input with ability to read chars one by one
      */
-    private class SequentialUTF8CharInput(val input: Input) {
+    interface UTF8CharInput {
+        fun readUTF8Char() : Char
+    }
 
-        private var bufferedString : String? = null;
+    private class SequentialUTF8CharInput(val input: Input) : UTF8CharInput {
+
+        private var bufferedString : String? = null
         private var index = 0
 
-        fun readUTF8Char() : Char {
+        override fun readUTF8Char() : Char {
             if (bufferedString == null) {
                 try {
                     bufferedString = input.readUtf8String()
                     index = 0
                 } catch (eofe: EOFException) {
-                    return -1 as Char
+                    return Parser.EOF
                 }
             }
             val ret = bufferedString!![index++]
@@ -1471,6 +1479,15 @@ interface Json : JsonSerializable {
                 bufferedString = null
             }
             return ret
+        }
+    }
+
+    private class StringUTF8CharInput(val source : String) : UTF8CharInput {
+        private var index = 0
+
+        override fun readUTF8Char() : Char {
+            if (index == source.length) return Parser.EOF
+            return source[index++]
         }
     }
 }
