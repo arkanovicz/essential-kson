@@ -17,24 +17,6 @@ apply("versions.gradle.kts")
 group = "com.republicate.json"
 version = "1.0" + (if (System.getProperty("snapshot")?.toBoolean() == true) "-SNAPSHOT" else "")
 
-// fails with message: Unresolved reference: compile
-// dependencies {
-//     compile("org.jetbrains.kotlinx:kotlinx-io:0.1.16")
-// }
-// 
-
-// same
-// subprojects {
-//     dependencies {
-//         compile("org.jetbrains.kotlinx:kotlinx-io:0.1.16")
-//     }
-// }
-// 
-
-dependencies {
-    "commonMainImplementation"("org.jetbrains.kotlinx:kotlinx-io:0.1.16")
-}
-
 kotlin {
     // explicitApi()
     jvm {
