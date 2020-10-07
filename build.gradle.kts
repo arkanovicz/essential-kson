@@ -1,8 +1,13 @@
-repositories {
-    jcenter()
-    mavenCentral()
-    mavenLocal() // for kotlinx-io:0.2.0
-    maven(url = "https://kotlin.bintray.com/kotlinx/") // for kotlinx-datetime:0.1.0
+buildscript {
+    repositories {
+        gradlePluginPortal()
+        jcenter()
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.10")
+    }
 }
 
 plugins {
@@ -12,12 +17,20 @@ plugins {
     // `maven-publish`
 }
 
-apply("versions.gradle.kts")
-
 group = "com.republicate.json"
 version = "1.0" + (if (System.getProperty("snapshot")?.toBoolean() == true) "-SNAPSHOT" else "")
 
+repositories {
+    jcenter()
+    mavenCentral()
+    mavenLocal() // for kotlinx-io:0.2.0
+    maven(url = "https://kotlin.bintray.com/kotlinx/") // for kotlinx-datetime:0.1.0
+}
+
+apply("versions.gradle.kts")
+
 kotlin {
+
     // explicitApi()
     jvm {
         compilations.all {
@@ -84,20 +97,14 @@ kotlin {
         val jvmTest by getting {
             dependencies {
                 implementation(kotlin("test-junit"))
+                runtimeOnly("org.slf4j:slf4j-simple:${extra["slf4j_version"]}")
                 // implementation(kotlin("test"))
                 //implementation(kotlin("test-junit"))
                 //implementation("junit:junit:${extra["junit_version"]}")
-                /*
-                implementation("org.mockito:mockito-all:${extra["mockito_version"]}")
-                implementation("org.apache.logging.log4j:log4j-api:${extra["log4j_version"]}")
-                implementation("org.apache.logging.log4j:log4j-core:${extra["log4j_version"]}")
-                implementation("org.apache.logging.log4j:log4j-slf4j-impl:${extra["log4j_version"]}")
-                 */
             }
         }
         val jsMain by getting {
             dependencies {
-                implementation("org.slf4j:slf4j-api:${extra["slf4j_version"]}")
             }            
         }
         val jsTest by getting {
@@ -128,6 +135,9 @@ tasks {
         from(dokkaHtml)
         dependsOn(dokkaHtml)
         archiveClassifier.set("javadoc")
+    }
+    named("kotlinNpmInstall").configure {
+        onlyIf { false }
     }
 }
 
