@@ -28,10 +28,10 @@ import kotlinx.io.Output
 import kotlinx.io.text.readUtf8String
 import kotlinx.io.text.writeUtf8Char
 import kotlinx.io.text.writeUtf8String
+import kotlin.math.max
 import mu.KotlinLogging
 import org.gciatto.kt.math.BigDecimal
 import org.gciatto.kt.math.BigInteger
-import kotlin.math.max
 
 expect interface JsonSerializable
 

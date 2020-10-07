@@ -68,21 +68,25 @@ kotlin {
         }
         val commonTest by getting {
             dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.1.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-io:0.2.0")
+                implementation("io.github.gciatto:kt-math:0.2.2")
+                implementation("io.github.microutils:kotlin-logging:2.0.3")
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
             }
         }
         val jvmMain by getting {
             dependencies {
-                // implementation("org.jetbrains.kotlinx:kotlinx-io-jvm:0.1.16") should not be needed
-                api("org.slf4j:slf4j-api:${extra["slf4j_version"]}")
+                implementation("org.slf4j:slf4j-api:${extra["slf4j_version"]}")
             }
         }
         val jvmTest by getting {
             dependencies {
-                // implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
-                implementation("junit:junit:${extra["junit_version"]}")
+                // implementation(kotlin("test"))
+                //implementation(kotlin("test-junit"))
+                //implementation("junit:junit:${extra["junit_version"]}")
                 /*
                 implementation("org.mockito:mockito-all:${extra["mockito_version"]}")
                 implementation("org.apache.logging.log4j:log4j-api:${extra["log4j_version"]}")
@@ -93,8 +97,7 @@ kotlin {
         }
         val jsMain by getting {
             dependencies {
-                // implementation("org.jetbrains.kotlinx:kotlinx-io-js:0.1.16") should not be needed
-                api("org.slf4j:slf4j-api:${extra["slf4j_version"]}")
+                implementation("org.slf4j:slf4j-api:${extra["slf4j_version"]}")
             }            
         }
         val jsTest by getting {
