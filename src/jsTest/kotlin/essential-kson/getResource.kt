@@ -1,7 +1,22 @@
 package com.republicate.json
 
-import kotlinx.io.Input
+import io.ktor.client.*
+import io.ktor.client.request.*
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.asPromise
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.promise
+import kotlin.js.Promise
 
-actual fun getResource(path: String): String {
-    TODO("Not yet implemented")
+val client = HttpClient()
+
+actual suspend fun getResource(path: String) : String {
+
+    var content = GlobalScope.async {
+        client.get<String> { url(path) }
+    }
+    return content.await()
 }

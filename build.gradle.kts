@@ -46,8 +46,9 @@ kotlin {
         browser {
             testTask {
                 useKarma {
+                     useDebuggableChrome()
                     //useChromeHeadless()
-                    useFirefox()
+                    //useFirefox()
                     webpackConfig.cssSupport.enabled = true
                 }
             }
@@ -87,6 +88,9 @@ kotlin {
                 implementation("io.github.microutils:kotlin-logging:2.0.3")
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
+                // implementation("org.jetbrains.kotlinx:atomicfu-common:0.14.4")
+                implementation("io.ktor:ktor-client-core:1.4.1")
             }
         }
         val jvmMain by getting {

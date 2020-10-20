@@ -12,7 +12,7 @@ fun Double.toString(numOfDec: Int): String {
     return "${integerDigits}.${floatDigits}"
 }
 
-expect fun getResource(path: String): String
+expect suspend fun getResource(path: String): String
 
 abstract class BaseTestUnit
 {

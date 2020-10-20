@@ -26,7 +26,6 @@ import kotlinx.io.EOFException
 import kotlinx.io.Input
 import kotlinx.io.Output
 import kotlinx.io.text.readUtf8String
-import kotlinx.io.text.writeUtf8Char
 import kotlinx.io.text.writeUtf8String
 import kotlin.math.max
 import mu.KotlinLogging
@@ -47,6 +46,9 @@ fun Char.isISOControl() : Boolean {
 }
 
 fun Char.isDigit() : Boolean = this in '0'..'9'
+
+// only for one-byte UTF8 chars, optimization of writeUTF8Char
+private inline fun Output.writeChar(c : Char) { this.writeByte(c.toByte()) }
 
 class JsonException(message: String?, cause: Throwable? = null) : Exception(message, cause)
 
@@ -139,7 +141,8 @@ interface Json {
     fun toPrettyString(): String? {
         return try {
             val output = ByteArrayOutput()
-            toPrettyString(output, "").toString()
+            toPrettyString(output, "")
+            output.toByteArray().decodeToString()
         } catch (ioe: JsonException) {
             logger.error(ioe) { "could not render Json container string" }
             null
@@ -220,7 +223,9 @@ interface Json {
          */
         @Throws(JsonException::class)
         fun escape(str: String): String? {
-            return Serializer.escapeJson(str, ByteArrayOutput()).toString()
+            val output = ByteArrayOutput()
+            Serializer.escapeJson(str, output)
+            return output.toByteArray().decodeToString()
         }
 
         /**
@@ -269,7 +274,7 @@ interface Json {
      * Json.Array
      *
      */
-    class Array(private val lst: MutableList<Any?>) : Json, MutableList<Any?> by lst {
+    data class Array(private val lst: MutableList<Any?>) : Json, MutableList<Any?> by lst {
         /**
          * Builds an empty Json.Array.
          */
@@ -319,15 +324,15 @@ interface Json {
          * Writes a representation of this container to the specified writer.
          * @param output target output
          */
-        @Throws(JsonException::class)
+         @Throws(JsonException::class)
         override fun toString(output: Output): Output {
-            output.writeByte('['.toByte())
+            output.writeChar('[')
             var first = true
             for (value in this) {
                 if (first) {
                     first = false
                 } else {
-                    output.writeByte(','.toByte())
+                    output.writeChar(',')
                 }
                 if (value is Json) {
                     value.toString(output)
@@ -335,7 +340,7 @@ interface Json {
                     Serializer.writeSerializable(value, output)
                 }
             }
-            output.writeByte(']'.toByte())
+            output.writeChar(']')
             return output
         }
 
@@ -347,7 +352,7 @@ interface Json {
         @Throws(JsonException::class)
         override fun toPrettyString(output: Output, indent: String): Output {
             val nextIndent = indent + INDENTATION
-            output.writeUtf8Char('[')
+            output.writeChar('[')
             if (!isEmpty()) {
                 output.writeUtf8String("\n$nextIndent")
             }
@@ -364,9 +369,9 @@ interface Json {
                     Serializer.writeSerializable(value, output)
                 }
             }
-            if (!first) output.writeUtf8Char('\n')
+            if (!first) output.writeChar('\n')
             if (!isEmpty()) output.writeUtf8String(indent)
-            output.writeUtf8Char(']')
+            output.writeChar(']')
             return output
         }
 
@@ -376,7 +381,8 @@ interface Json {
          */
         override fun toString(): String {
             val output = ByteArrayOutput()
-            return toString(output).toString()
+            toString(output)
+            return output.toByteArray().decodeToString()
         }
 
         /**
@@ -589,7 +595,7 @@ interface Json {
      * Json.Object
      *
      */
-    class Object(private val map: MutableMap<String, Any?>) : Json, MutableMap<String, Any?> by map,
+    data class Object(private val map: MutableMap<String, Any?>) : Json, MutableMap<String, Any?> by map,
             Iterable<Map.Entry<String, Any?>> {
         /**
          * Builds an emepty Json.Object.
@@ -636,24 +642,25 @@ interface Json {
          */
         @Throws(JsonException::class)
         override fun toString(output: Output): Output {
-            output.writeUtf8Char('{')
+            output.writeChar('{')
             var first = true
             for ((key, value) in entries) {
                 if (first) {
                     first = false
                 } else {
-                    output.writeUtf8Char(',')
+                    output.writeChar(',')
                 }
-                output.writeUtf8Char('"')
+                output.writeChar('"')
                 output.writeUtf8String(key)
-                output.writeUtf8String("\":")
+                output.writeChar('"')
+                output.writeChar(':')
                 if (value is Json) {
                     value.toString(output)
                 } else {
                     Serializer.writeSerializable(value, output)
                 }
             }
-            output.writeUtf8Char('}')
+            output.writeChar('}')
             return output
         }
 
@@ -664,8 +671,8 @@ interface Json {
          */
         @Throws(JsonException::class)
         override fun toPrettyString(output: Output, indent: String): Output {
-            output.writeUtf8Char('{')
-            if (!isEmpty()) output.writeUtf8Char('\n')
+            output.writeChar('{')
+            if (!isEmpty()) output.writeChar('\n')
             val nextIndent = indent + INDENTATION
             var first = true
             for ((key, value) in entries) {
@@ -675,7 +682,7 @@ interface Json {
                     output.writeUtf8String(",\n")
                 }
                 output.writeUtf8String(nextIndent)
-                output.writeUtf8Char('"')
+                output.writeChar('"')
                 output.writeUtf8String(key)
                 output.writeUtf8String("\" : ")
                 if (value is Json) {
@@ -684,9 +691,9 @@ interface Json {
                     Serializer.writeSerializable(value, output)
                 }
             }
-            if (!first) output.writeUtf8Char('\n')
+            if (!first) output.writeChar('\n')
             if (!isEmpty()) output.writeUtf8String(indent)
-            output.writeUtf8Char('}')
+            output.writeChar('}')
             return output
         }
 
@@ -696,7 +703,8 @@ interface Json {
          */
         override fun toString(): String {
             val output = ByteArrayOutput()
-            return toString(output).toString()
+            toString(output)
+            return output.toByteArray().decodeToString()
         }
 
         /**
@@ -961,21 +969,24 @@ interface Json {
          */
         @Throws(JsonException::class)
         fun writeSerializable(serializable: Any?, output: Output) {
-            val str = when (serializable) {
-                is Boolean -> serializable.toString()
+            when (serializable) {
+                is Boolean -> output.writeUtf8String(serializable.toString())
                 is Number -> {
                     val number = serializable.toString()
                     if (number == "-Infinity" || number == "Infinity" || number == "NaN") {
                         throw JsonException("invalid number: $number")
                     }
-                    number
+                    output.writeUtf8String(number)
                 }
                 else -> {
-                    if (serializable == null) "null"
-                    else "\"${serializable}\""
+                    if (serializable == null) output.writeUtf8String("null")
+                    else {
+                        output.writeChar('"')
+                        escapeJson(serializable.toString(), output)
+                        output.writeChar('"')
+                    }
                 }
             }
-            output.writeUtf8String(str)
         }
 
         init {
@@ -1176,7 +1187,7 @@ interface Json {
                 while (pos < buffer.size) {
                     buffer[pos++] = next()
                     if (ch == '"') {
-                        return builder?.append(buffer, 0, pos - 1)?.toString() ?: buffer.concatToString(0, pos - 1)
+                        return builder?.appendRange(buffer, 0, pos - 1)?.toString() ?: buffer.concatToString(0, pos - 1)
                     } else if (ch == '\\') {
                         if (builder == null) {
                             builder = StringBuilder(max(2 * pos, 16))
@@ -1207,7 +1218,7 @@ interface Json {
                 if (builder == null) {
                     builder = StringBuilder(max(2 * pos, 16))
                 }
-                builder.append(buffer, 0, pos)
+                builder.appendRange(buffer, 0, pos)
                 pos = 0
             }
         }
