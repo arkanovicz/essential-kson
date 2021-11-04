@@ -95,13 +95,13 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
-                implementation("org.slf4j:slf4j-api:${extra["slf4j_version"]}")
+                // implementation("org.slf4j:slf4j-api:${extra["slf4j_version"]}")
             }
         }
         val jvmTest by getting {
             dependencies {
                 implementation(kotlin("test-junit"))
-                runtimeOnly("org.slf4j:slf4j-simple:${extra["slf4j_version"]}")
+                //runtimeOnly("org.slf4j:slf4j-simple:${extra["slf4j_version"]}")
                 // implementation(kotlin("test"))
                 //implementation(kotlin("test-junit"))
                 //implementation("junit:junit:${extra["junit_version"]}")
