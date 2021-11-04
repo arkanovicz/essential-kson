@@ -37,18 +37,17 @@ expect interface JsonSerializable
 private val logger = KotlinLogging.logger {}
 
 fun Char.isISOControl() : Boolean {
-    val codePoint = this.toInt()
     // Optimized form of:
     //     (codePoint >= 0x00 && codePoint <= 0x1F) ||
     //     (codePoint >= 0x7F && codePoint <= 0x9F);
-    return codePoint <= 0x9F &&
-            (codePoint >= 0x7F || codePoint ushr 5 == 0)
+    return code <= 0x9F &&
+            (code >= 0x7F || code ushr 5 == 0)
 }
 
 fun Char.isDigit() : Boolean = this in '0'..'9'
 
 // only for one-byte UTF8 chars, optimization of writeUTF8Char
-private inline fun Output.writeChar(c : Char) { this.writeByte(c.toByte()) }
+private inline fun Output.writeChar(c : Char) { this.writeByte(c.code as Byte) }
 
 class JsonException(message: String?, cause: Throwable? = null) : Exception(message, cause)
 
@@ -938,7 +937,7 @@ interface Json {
                 val c = str[i]
                 var escaped: String
                 if (c.toInt() < 128) {
-                    escaped = ESCAPED_CHARS[c.toInt()]
+                    escaped = ESCAPED_CHARS[c.code]
                     if (escaped.isEmpty()) {
                         continue
                     }
@@ -993,12 +992,12 @@ interface Json {
             for (i in 0..0x1f) {
                 ESCAPED_CHARS[i] = "\\u${i.toString(16).padStart(4, '0')}"
             }
-            ESCAPED_CHARS['"'.toInt()] = "\\\""
-            ESCAPED_CHARS['\\'.toInt()] = "\\\\"
-            ESCAPED_CHARS['\t'.toInt()] = "\\t"
-            ESCAPED_CHARS['\b'.toInt()] = "\\b"
-            ESCAPED_CHARS['\n'.toInt()] = "\\n"
-            ESCAPED_CHARS['\r'.toInt()] = "\\r"
+            ESCAPED_CHARS['"'.code] = "\\\""
+            ESCAPED_CHARS['\\'.code] = "\\\\"
+            ESCAPED_CHARS['\t'.code] = "\\t"
+            ESCAPED_CHARS['\b'.code] = "\\b"
+            ESCAPED_CHARS['\n'.code] = "\\n"
+            ESCAPED_CHARS['\r'.code] = "\\r"
             // ESCAPED_CHARS['\f'.toInt()] = "\\f" // No form feed in kotlin
         }
     }
@@ -1234,7 +1233,7 @@ interface Json {
                         if (next() == EOF) {
                             throw error("unterminated escape sequence")
                         }
-                        result = (result.toInt() shl 4).toChar()
+                        result = (result.code shl 4).toChar()
                         result += when (ch) {
                             in '0'..'9' -> ch - '0'
                             in 'a'..'f' -> ch - 'a' + 10
