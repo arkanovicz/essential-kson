@@ -1,30 +1,28 @@
 buildscript {
     repositories {
         gradlePluginPortal()
-        jcenter()
         google()
         mavenCentral()
     }
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.10")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.31")
     }
 }
 
 plugins {
-    kotlin("multiplatform") version "1.4.21"
-    id("org.jetbrains.dokka") version "1.4.0"
+    kotlin("multiplatform") version "1.5.31"
+    id("org.jetbrains.dokka") version "1.5.31"
     // id("com.jfrog.artifactory") version "4.17.2"
     // `maven-publish`
 }
 
-group = "com.republicate.json"
+group = "com.republicate.kson"
 version = "1.0" + (if (System.getProperty("snapshot")?.toBoolean() == true) "-SNAPSHOT" else "")
 
 repositories {
-    jcenter()
     mavenCentral()
     mavenLocal() // for kotlinx-io:0.2.0
-    maven(url = "https://kotlin.bintray.com/kotlinx/") // for kotlinx-datetime:0.1.0
+    maven(url = "https://kotlin.bintray.com/kotlinx/") // for kotlinx-datetime:0.3.1
 }
 
 apply("versions.gradle.kts")
@@ -37,8 +35,8 @@ kotlin {
             // kotlin compiler compatibility options
             kotlinOptions {
                 jvmTarget = "1.8"
-                apiVersion = "1.4"
-                languageVersion = "1.4"
+                apiVersion = "1.5"
+                languageVersion = "1.5"
             }
         }
     }
@@ -74,23 +72,23 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api("org.jetbrains.kotlinx:kotlinx-datetime:0.1.0")
+                api("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
                 api("org.jetbrains.kotlinx:kotlinx-io:0.2.0")
-                api("io.github.gciatto:kt-math:0.2.2")
-                implementation("io.github.microutils:kotlin-logging:2.0.3")
+                api("io.github.gciatto:kt-math:0.4.0")
+                implementation("io.github.microutils:kotlin-logging:2.0.11")
             }
         }
         val commonTest by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.1.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
                 implementation("org.jetbrains.kotlinx:kotlinx-io:0.2.0")
-                implementation("io.github.gciatto:kt-math:0.2.2")
-                implementation("io.github.microutils:kotlin-logging:2.0.3")
+                implementation("io.github.gciatto:kt-math:0.4.0")
+                implementation("io.github.microutils:kotlin-logging:2.0.11")
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
                 // implementation("org.jetbrains.kotlinx:atomicfu-common:0.14.4")
-                implementation("io.ktor:ktor-client-core:1.4.1")
+                implementation("io.ktor:ktor-client-core:1.6.5")
             }
         }
         val jvmMain by getting {
