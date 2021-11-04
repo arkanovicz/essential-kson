@@ -1,4 +1,4 @@
-package com.republicate.json
+package com.republicate.kson
 
 import org.junit.Assert.assertTrue
 import org.junit.Test

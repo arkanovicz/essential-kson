@@ -1,4 +1,4 @@
-package com.republicate.json
+package com.republicate.kson
 
 actual interface JsonSerializable
 

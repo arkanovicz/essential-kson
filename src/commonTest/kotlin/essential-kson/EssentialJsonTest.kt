@@ -1,4 +1,4 @@
-package com.republicate.json
+package com.republicate.kson
 
 import kotlin.test.Test
 import mu.KotlinLogging

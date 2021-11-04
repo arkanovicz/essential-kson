@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.republicate.json
+package com.republicate.kson
 
 import kotlinx.coroutines.CoroutineScope
 

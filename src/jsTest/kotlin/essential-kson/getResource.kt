@@ -1,4 +1,4 @@
-package com.republicate.json
+package com.republicate.kson
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.*
