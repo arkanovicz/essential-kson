@@ -30,7 +30,7 @@ abstract class BaseTestUnit
             }
             else if (c == '"') insideString = true
             if (insideString || !c.isWhitespace()) {
-                ret = ret xor c.toInt()
+                ret = ret xor c.code
             }
         }
         return ret

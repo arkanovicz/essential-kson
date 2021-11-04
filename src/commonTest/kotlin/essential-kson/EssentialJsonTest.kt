@@ -654,7 +654,7 @@ class EssentialJsonTest : BaseTestUnit()
     if (awaitError || mayThrow)
     {
         try {
-            val instance = Json.parseValue(content)
+            /* val instance = */ Json.parseValue(content)
             if (awaitError) fail("Exception awaited!")
             // skip further tests
                 return@runTest

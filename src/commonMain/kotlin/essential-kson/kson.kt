@@ -47,7 +47,7 @@ fun Char.isISOControl() : Boolean {
 fun Char.isDigit() : Boolean = this in '0'..'9'
 
 // only for one-byte UTF8 chars, optimization of writeUTF8Char
-private inline fun Output.writeChar(c : Char) { this.writeByte(c.code as Byte) }
+private fun Output.writeSimpleChar(c : Char) { this.writeByte(c.code.toByte()) }
 
 class JsonException(message: String?, cause: Throwable? = null) : Exception(message, cause)
 
@@ -325,13 +325,13 @@ interface Json {
          */
          @Throws(JsonException::class)
         override fun toString(output: Output): Output {
-            output.writeChar('[')
+            output.writeSimpleChar('[')
             var first = true
             for (value in this) {
                 if (first) {
                     first = false
                 } else {
-                    output.writeChar(',')
+                    output.writeSimpleChar(',')
                 }
                 if (value is Json) {
                     value.toString(output)
@@ -339,7 +339,7 @@ interface Json {
                     Serializer.writeSerializable(value, output)
                 }
             }
-            output.writeChar(']')
+            output.writeSimpleChar(']')
             return output
         }
 
@@ -351,7 +351,7 @@ interface Json {
         @Throws(JsonException::class)
         override fun toPrettyString(output: Output, indent: String): Output {
             val nextIndent = indent + INDENTATION
-            output.writeChar('[')
+            output.writeSimpleChar('[')
             if (!isEmpty()) {
                 output.writeUtf8String("\n$nextIndent")
             }
@@ -368,9 +368,9 @@ interface Json {
                     Serializer.writeSerializable(value, output)
                 }
             }
-            if (!first) output.writeChar('\n')
+            if (!first) output.writeSimpleChar('\n')
             if (!isEmpty()) output.writeUtf8String(indent)
-            output.writeChar(']')
+            output.writeSimpleChar(']')
             return output
         }
 
@@ -641,25 +641,25 @@ interface Json {
          */
         @Throws(JsonException::class)
         override fun toString(output: Output): Output {
-            output.writeChar('{')
+            output.writeSimpleChar('{')
             var first = true
             for ((key, value) in entries) {
                 if (first) {
                     first = false
                 } else {
-                    output.writeChar(',')
+                    output.writeSimpleChar(',')
                 }
-                output.writeChar('"')
+                output.writeSimpleChar('"')
                 output.writeUtf8String(key)
-                output.writeChar('"')
-                output.writeChar(':')
+                output.writeSimpleChar('"')
+                output.writeSimpleChar(':')
                 if (value is Json) {
                     value.toString(output)
                 } else {
                     Serializer.writeSerializable(value, output)
                 }
             }
-            output.writeChar('}')
+            output.writeSimpleChar('}')
             return output
         }
 
@@ -670,8 +670,8 @@ interface Json {
          */
         @Throws(JsonException::class)
         override fun toPrettyString(output: Output, indent: String): Output {
-            output.writeChar('{')
-            if (!isEmpty()) output.writeChar('\n')
+            output.writeSimpleChar('{')
+            if (!isEmpty()) output.writeSimpleChar('\n')
             val nextIndent = indent + INDENTATION
             var first = true
             for ((key, value) in entries) {
@@ -681,7 +681,7 @@ interface Json {
                     output.writeUtf8String(",\n")
                 }
                 output.writeUtf8String(nextIndent)
-                output.writeChar('"')
+                output.writeSimpleChar('"')
                 output.writeUtf8String(key)
                 output.writeUtf8String("\" : ")
                 if (value is Json) {
@@ -690,9 +690,9 @@ interface Json {
                     Serializer.writeSerializable(value, output)
                 }
             }
-            if (!first) output.writeChar('\n')
+            if (!first) output.writeSimpleChar('\n')
             if (!isEmpty()) output.writeUtf8String(indent)
-            output.writeChar('}')
+            output.writeSimpleChar('}')
             return output
         }
 
@@ -936,7 +936,7 @@ interface Json {
             for (i in 0 until len) {
                 val c = str[i]
                 var escaped: String
-                if (c.toInt() < 128) {
+                if (c.code < 128) {
                     escaped = ESCAPED_CHARS[c.code]
                     if (escaped.isEmpty()) {
                         continue
@@ -980,9 +980,9 @@ interface Json {
                 else -> {
                     if (serializable == null) output.writeUtf8String("null")
                     else {
-                        output.writeChar('"')
+                        output.writeSimpleChar('"')
                         escapeJson(serializable.toString(), output)
-                        output.writeChar('"')
+                        output.writeSimpleChar('"')
                     }
                 }
             }
@@ -1091,7 +1091,7 @@ interface Json {
         private fun display(c: Char): String {
             return when {
                 c == EOF -> "end of stream"
-                c.isISOControl() -> "0x${c.toLong().toString(16)}"
+                c.isISOControl() -> "0x${c.code.toString(16)}"
                 else -> "$c"
             }
         }
