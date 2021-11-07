@@ -3,7 +3,7 @@ plugins {
     id("org.jetbrains.dokka") version "1.5.0"
     `maven-publish`
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
-//    signing
+    signing
 }
 
 group = "com.republicate.kson"
@@ -11,12 +11,11 @@ version = "1.0"
 
 repositories {
     mavenCentral()
-//    maven(url = "https://kotlin.bintray.com/kotlinx/") // for kotlinx-datetime:0.3.1
 }
 
 apply(plugin = "io.github.gradle-nexus.publish-plugin")
 apply(plugin = "maven-publish")
-//apply(plugin = "signing")
+apply(plugin = "signing")
 
 kotlin {
 
@@ -122,12 +121,10 @@ tasks {
     }
 }
 
-//signing {
-//    val signingKey: String? by project
-//    val signingPassword: String? by project
-//    useInMemoryPgpKeys(signingKey, signingPassword)
-//    sign(publishing.publications)
-//}
+signing {
+    useGpgCmd()
+    sign(configurations.archives.get())
+}
 
 publishing {
     publications.withType<MavenPublication> {
