@@ -1,31 +1,22 @@
-buildscript {
-    repositories {
-        gradlePluginPortal()
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.31")
-    }
-}
-
 plugins {
     kotlin("multiplatform") version "1.5.31"
-    id("org.jetbrains.dokka") version "1.5.31"
-    // id("com.jfrog.artifactory") version "4.17.2"
-    // `maven-publish`
+    id("org.jetbrains.dokka") version "1.5.0"
+    `maven-publish`
+    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+//    signing
 }
 
 group = "com.republicate.kson"
-version = "1.0" + (if (System.getProperty("snapshot")?.toBoolean() == true) "-SNAPSHOT" else "")
+version = "1.0"
 
 repositories {
     mavenCentral()
-    mavenLocal() // for kotlinx-io:0.2.0
-    maven(url = "https://kotlin.bintray.com/kotlinx/") // for kotlinx-datetime:0.3.1
+//    maven(url = "https://kotlin.bintray.com/kotlinx/") // for kotlinx-datetime:0.3.1
 }
 
-apply("versions.gradle.kts")
+apply(plugin = "io.github.gradle-nexus.publish-plugin")
+apply(plugin = "maven-publish")
+//apply(plugin = "signing")
 
 kotlin {
 
@@ -73,7 +64,6 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
-                api("org.jetbrains.kotlinx:kotlinx-io:0.2.0")
                 api("io.github.gciatto:kt-math:0.4.0")
                 implementation("io.github.microutils:kotlin-logging:2.0.11")
             }
@@ -81,28 +71,20 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
-                implementation("org.jetbrains.kotlinx:kotlinx-io:0.2.0")
-                implementation("io.github.gciatto:kt-math:0.4.0")
-                implementation("io.github.microutils:kotlin-logging:2.0.11")
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
-                // implementation("org.jetbrains.kotlinx:atomicfu-common:0.14.4")
                 implementation("io.ktor:ktor-client-core:1.6.5")
             }
         }
         val jvmMain by getting {
             dependencies {
-                // implementation("org.slf4j:slf4j-api:${extra["slf4j_version"]}")
             }
         }
         val jvmTest by getting {
             dependencies {
                 implementation(kotlin("test-junit"))
-                //runtimeOnly("org.slf4j:slf4j-simple:${extra["slf4j_version"]}")
-                // implementation(kotlin("test"))
-                //implementation(kotlin("test-junit"))
-                //implementation("junit:junit:${extra["junit_version"]}")
+                runtimeOnly("org.slf4j:slf4j-simple:1.7.32")
             }
         }
         val jsMain by getting
@@ -140,113 +122,47 @@ tasks {
     }
 }
 
-/*
+//signing {
+//    val signingKey: String? by project
+//    val signingPassword: String? by project
+//    useInMemoryPgpKeys(signingKey, signingPassword)
+//    sign(publishing.publications)
+//}
+
 publishing {
     publications.withType<MavenPublication> {
         pom {
             name.set("essential-kson")
             description.set("essential-kson $version - Lightweight JSON library for Kotlin")
-            //url.set("https://github.com/MicroUtils/kotlin-logging")
+            url.set("https://gitlab.renegat.net/claude/essential-kson")
             licenses {
                 license {
                     name.set("The Apache Software License, Version 2.0")
-                    url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
                 }
             }
             developers {
                 developer {
                     name.set("Claude Brisson")
                     email.set("claude.brisson@gmail.com")
-                    organization.set("github")
-                    organizationUrl.set("http://www.github.com")
+                    organization.set("republicate.com")
+                    organizationUrl.set("https://republicate.com")
                 }
             }
             scm {
-                connection.set("scm:git:git://github.com/MicroUtils/kotlin-logging.git")
+                connection.set("scm:git@gitlab.renegat.net:claude/essential-kson.git")
                 developerConnection.set("scm:git:ssh://github.com:MicroUtils/kotlin-logging.git")
-                url.set("http://github.com/MicroUtils/kotlin-logging/tree/master")
+                url.set("https://gitlab.renegat.net/claude/essential-kson")
             }
         }
         artifact(tasks["dokkaJar"])
     }
 }
-*/
 
-/*
-publishing {
-    val bintrayOrg = "microutils"
-    val bintrayRepo = "kotlin-logging"
-    val bintrayUser = System.getProperty("bintray.user")
-    val bintrayApiKey = System.getProperty("bintray.key")
-
-    if (bintrayUser != null && bintrayApiKey != null) {
-        repositories {
-            maven {
-                name = "bintray"
-                url = uri(
-                    "https://api.bintray.com/maven/$bintrayOrg/$bintrayRepo/${project.name}/;publish=1;override=1"
-                )
-                credentials {
-                    username = bintrayUser
-                    password = bintrayApiKey
-                }
-            }
+nexusPublishing {
+    repositories {
+        sonatype {
+            useStaging.set(true)
         }
     }
 }
-*/
-
-//bintray {
-//    user = System.getProperty("bintray.user")
-//    key = System.getProperty("bintray.key") //https://bintray.com/profile/edit
-//    setPublications(*publishing.publications.names.toTypedArray())
-//    publish = true //[Default: false] Whether version should be auto published after an upload
-//    pkg.apply {
-//        repo = "kotlin-logging"
-//        name = "kotlin-logging"
-//        userOrg = "microutils"
-//        setLicenses("Apache-2.0")
-//        vcsUrl = "https://github.com/MicroUtils/kotlin-logging"
-//        websiteUrl = "https://github.com/MicroUtils/kotlin-logging"
-//        issueTrackerUrl = "https://github.com/MicroUtils/kotlin-logging/issues"
-//
-//        githubRepo = "MicroUtils/kotlin-logging"
-//        githubReleaseNotesFile = "ChangeLog.md"
-//        version.apply {
-//            name = "${project.version}"
-//            desc = "kotlin-logging - Lightweight logging framework for Kotlin"
-//            released = "${Date()}"
-//            gpg.sign = true //Determines whether to GPG sign the files. The default is false
-//            mavenCentralSync.apply {
-//                sync = true //[Default: true] Determines whether to sync the version to Maven Central.
-//                user = System.getProperty("maven.user") //OSS user token: mandatory
-//                password = System.getProperty("maven.password") //OSS user password: mandatory
-//                close =
-//                    "1" //Optional property. By default the staging repository is closed and artifacts are released to Maven Central. You can optionally turn this behaviour off (by puting 0 as value) and release the version manually.
-//            }
-//        }
-//    }
-//}
-
-/*
-artifactory {
-    setContextUrl("http://oss.jfrog.org")
-    publish(delegateClosureOf<org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig> {
-        repository(delegateClosureOf<groovy.lang.GroovyObject> {
-            setProperty("repoKey", "oss-snapshot-local")
-            setProperty("username", System.getProperty("bintray.user"))
-            setProperty("password", System.getProperty("bintray.key"))
-            setProperty("maven", true)
-        })
-        defaults(delegateClosureOf<groovy.lang.GroovyObject> {
-            invokeMethod("publications", publishing.publications.names.toTypedArray())
-            setProperty("publishArtifacts", true)
-            setProperty("publishPom", true)
-        })
-    })
-    resolve(delegateClosureOf<org.jfrog.gradle.plugin.artifactory.dsl.ResolverConfig> {
-        setProperty("repoKey", "jcenter")
-    })
-    clientConfig.info.buildNumber = System.getProperty("build.number")
-}
-*/
