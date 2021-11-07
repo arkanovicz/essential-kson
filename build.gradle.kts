@@ -123,7 +123,7 @@ tasks {
 
 signing {
     useGpgCmd()
-    sign(configurations.archives.get())
+    sign(publishing.publications)
 }
 
 publishing {
