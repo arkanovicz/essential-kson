@@ -191,7 +191,7 @@ interface Json {
      * deep-clone object
          * @return deep-cloned object
      */
-    fun clone(): Any
+    fun copy(): Json
 
     companion object {
         /**
@@ -312,7 +312,7 @@ interface Json {
      * Json.Array
      *
      */
-    data class Array(private val lst: MutableList<Any?>) : Json, MutableList<Any?> by lst {
+    open class Array(private val lst: MutableList<Any?>) : Json, MutableList<Any?> by lst {
         /**
          * Builds an empty Json.Array.
          */
@@ -613,18 +613,33 @@ interface Json {
             return this
         }
 
-        override fun clone(): Any {
+        override fun copy(): Array {
             val myself = this
             val clone = newArray().apply { addAll(myself) }
             for (i in clone.indices) {
                 // we make the assumption that an object is either Json or immutable (so already there)
                 var value = get(i)
                 if (value is Json) {
-                    value = value.clone()
+                    value = value.copy()
                     clone.put(i, value)
                 }
             }
             return clone
+        }
+
+        override fun equals(other: Any?): Boolean {
+            if (other == null) return false
+            if (other === this) return true
+            if (other !is Array) return false
+            if (other.size != size) return false
+            val it1 = iterator()
+            val it2 = other.iterator()
+            while (it1.hasNext()) {
+                val e1 = it1.next()
+                val e2 = it2.next()
+                if (e1 != e2) return false
+            }
+            return true
         }
     }
 
@@ -633,7 +648,7 @@ interface Json {
      * Json.Object
      *
      */
-    data class Object(private val map: MutableMap<String, Any?>) : Json, MutableMap<String, Any?> by map,
+    open class Object(private val map: MutableMap<String, Any?>) : Json, MutableMap<String, Any?> by map,
             Iterable<Map.Entry<String, Any?>> {
         /**
          * Builds an emepty Json.Object.
@@ -934,19 +949,36 @@ interface Json {
             return this
         }
 
-        override fun clone(): Any {
+        override fun copy(): Object {
             val myself = this
             val clone = newObject().apply { putAll(myself) }
             for (entry in entries) {
                 var value = entry.value
                 if (value is Json) {
-                    value = value.clone()
+                    value = value.copy()
                     entry.setValue(value)
                 }
             }
             return clone
         }
+
+        override fun equals(other: Any?): Boolean {
+            if (other == null) return false
+            if (other === this) return true
+            if (other !is Object) return false
+            if (other.size != size) return false
+            val it1 = entries.iterator()
+            val it2 = other.entries.iterator()
+            while (it1.hasNext()) {
+                val e1 = it1.next()
+                val e2 = it2.next()
+                if (e1 != e2) return false
+            }
+            return true
+        }
+
     }
+
     /*****************************************************************
      *
      * Serializer
