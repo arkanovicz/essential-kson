@@ -11,6 +11,7 @@ version = "1.1"
 
 repositories {
     mavenCentral()
+//    maven("https://republicate.com/maven2") // for kmath
 }
 
 apply(plugin = "io.github.gradle-nexus.publish-plugin")
@@ -30,7 +31,7 @@ kotlin {
             }
         }
     }
-    js(LEGACY) {
+    js(IR) {
         browser {
             testTask {
                 useKarma {
@@ -44,26 +45,22 @@ kotlin {
         // nodejs() what?!
     }
 
-    // (wip) fails with: Cannot add a KotlinSourceSet with name 'nativeMain' as a KotlinSourceSet with that name already exists.
-//     val hostOs = System.getProperty("os.name")
-//     val isMingwX64 = hostOs.startsWith("Windows")
-//     val nativeTarget = when {
+     val hostOs = System.getProperty("os.name")
+     val isMingwX64 = hostOs.startsWith("Windows")
+     val nativeTarget = when {
 //         hostOs == "Mac OS X" -> macosX64("native")
-//         hostOs == "Linux" -> linuxX64("native")
-//         isMingwX64 -> mingwX64("native")
-//         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
-//     }
-// 
+         hostOs == "Linux" -> linuxX64("native")
+         isMingwX64 -> mingwX64("native")
+         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
+     }
 
-    // linuxX64("linuxX64")
-    // macosX64("macosX64")
-    // mingwX64("mingwX64")
 
     sourceSets {
         val commonMain by getting {
             dependencies {
                 api("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
-                api("io.github.gciatto:kt-math:0.4.0")
+//                api("space.kscience:kmath-core:0.3.0-dev-17")
+                implementation("com.ionspin.kotlin:bignum:0.3.3")
                 implementation("io.github.microutils:kotlin-logging:2.0.11")
             }
         }
@@ -76,10 +73,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-core:1.6.5")
             }
         }
-        val jvmMain by getting {
-            dependencies {
-            }
-        }
+        val jvmMain by getting
         val jvmTest by getting {
             dependencies {
                 implementation(kotlin("test-junit"))
@@ -92,21 +86,7 @@ kotlin {
                 implementation(kotlin("test-js"))
             }
         }
-
-        /*
-        val nativeMain by creating {
-            dependsOn(commonMain)
-        }
-        val linuxX64Main by getting {
-            dependsOn(nativeMain)
-        }
-        val mingwX64Main by getting {
-            dependsOn(nativeMain)
-        }
-        val macosX64Main by getting {
-            dependsOn(nativeMain)
-        }
-        */
+        val nativeMain by getting
     }
 }
 

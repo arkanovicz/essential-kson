@@ -19,3 +19,9 @@ package com.republicate.kson
 import kotlinx.coroutines.CoroutineScope
 
 expect fun runTest(body: suspend CoroutineScope.() -> Unit)
+
+expect object platform {
+    fun js(): Boolean
+    fun jvm(): Boolean
+    fun native(): Boolean
+}

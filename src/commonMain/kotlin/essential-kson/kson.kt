@@ -18,13 +18,16 @@ package com.republicate.kson
  * under the License.
  */
 
+import com.ionspin.kotlin.bignum.BigNumber
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.Instant
 import kotlin.math.max
 import mu.KotlinLogging
-import org.gciatto.kt.math.BigDecimal
-import org.gciatto.kt.math.BigInteger
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import com.ionspin.kotlin.bignum.decimal.toBigDecimal
+import com.ionspin.kotlin.bignum.integer.BigInteger
+import com.ionspin.kotlin.bignum.integer.toBigInteger
 
 expect interface JsonSerializable
 
@@ -1039,7 +1042,7 @@ interface Json {
         fun writeSerializable(serializable: Any?, output: Output) {
             when (serializable) {
                 is Boolean -> output.writeString(serializable.toString())
-                is Number -> {
+                is Number, is BigNumber<*> -> {
                     val number = serializable.toString()
                     if (number == "-Infinity" || number == "Infinity" || number == "NaN") {
                         throw JsonException("invalid number: $number")
@@ -1401,11 +1404,11 @@ interface Json {
                     } else {
                         val strBuff = buffer.concatToString(0, pos)
                         if (!decimal) {
-                            BigInteger(strBuff)
+                            BigInteger.parseString(strBuff)
                         } else if (fitsInDouble) {
                             strBuff.toDouble()
                         } else {
-                            BigDecimal.of(strBuff)
+                            BigDecimal.parseString(strBuff)
                         }
                     }
             // we always end up reading one more character
@@ -1496,8 +1499,8 @@ interface Json {
 
         fun toBigInteger(value: Any?): BigInteger? =
             when (value) {
-                is Number -> BigInteger.of(value.toLong())
-                is String -> BigInteger.of(value)
+                is Number -> value.toLong().toBigInteger()
+                is String -> BigInteger.parseString(value)
                 else -> null
             }
 
@@ -1517,8 +1520,8 @@ interface Json {
 
         fun toBigDecimal(value: Any?): BigDecimal? =
             when (value) {
-                is Number -> BigDecimal(value.toDouble())
-                is String -> BigDecimal.of(value)
+                is Number -> value.toDouble().toBigDecimal()
+                is String -> BigDecimal.parseString(value)
                 else -> null
             }
 
