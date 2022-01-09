@@ -50,6 +50,7 @@ class JsonException(message: String?, cause: Throwable? = null) : Exception(mess
  * Json container
  *
  */
+@Suppress("unused")
 interface Json {
 
     /**
@@ -71,7 +72,7 @@ interface Json {
     /**
      * Output to string
      */
-    class StringOutput() : Output {
+    class StringOutput : Output {
         private val content = StringBuilder()
         override fun writeChar(c: Char) : Output {
             content.append(c)
@@ -125,9 +126,9 @@ interface Json {
     fun ensureIsObject()
 
     /**
-     * Get self as a Array
+     * Get self as an Array
      * @return self as a Jon.Array
-     * @throws IllegalStateException if container is not a Array
+     * @throws IllegalStateException if container is not an Array
      */
     fun asArray(): Array? {
         ensureIsArray()
@@ -135,9 +136,9 @@ interface Json {
     }
 
     /**
-     * Get self as a Array
+     * Get self as an Array
      * @return self as a Json.Object
-     * @throws IllegalStateException if container is not a Object
+     * @throws IllegalStateException if container is not an Object
      */
     fun asObject(): Object? {
         ensureIsObject()
@@ -160,7 +161,7 @@ interface Json {
      * Writes a representation of this container to the specified output.
      * @param output target writer
      * @return input writer
-     * @throws JsonException if serialization failes
+     * @throws JsonException if serialization fails
      */
     @Throws(JsonException::class)
     fun toString(output: Output): Output
@@ -170,7 +171,7 @@ interface Json {
      * @param output target output writer
      * @param indent current indentation
      * @return output writer
-     * @throws JsonException if serialization failes
+     * @throws JsonException if serialization fails
      */
     @Throws(JsonException::class)
     fun toPrettyString(output: Output, indent: String): Output
@@ -204,9 +205,7 @@ interface Json {
          * @throws JsonException if parsing fails
          */
         @Throws(JsonException::class)
-        fun parse(content: String): Json? {
-            return Parser(content).parse()
-        }
+        fun parse(content: String) = Parser(content).parse()
 
         /**
          * Parse a JSON stream into a JSON container
@@ -215,25 +214,19 @@ interface Json {
          * @throws JsonException if parsing fails
          */
         @Throws(JsonException::class)
-        fun parse(input: Input): Json? {
-            return Parser(input).parse()
-        }
+        fun parse(input: Input) = Parser(input).parse()
 
         /** creates a new Json.Object
          *
          * @return new Json.Object
          */
-        fun newObject(vararg elements: Pair<String, Any?>): Object {
-            return Object(*elements)
-        }
+        fun newObject(vararg elements: Pair<String, Any?>) = Object(*elements)
 
         /** creates a new Json.Array
          *
          * @return new Json.Object
          */
-        fun newArray(vararg elements: Any?): Array {
-            return Array(*elements)
-        }
+        fun newArray(vararg elements: Any?) = Array(*elements)
 
         /**
          * Parse a JSON stream into a JSON container or simple value
@@ -242,9 +235,7 @@ interface Json {
          * @throws JsonException if parsing fails
          */
         @Throws(JsonException::class)
-        fun parseValue(content: String): Any? {
-            return Parser(content).parseValue(true)
-        }
+        fun parseValue(content: String) = Parser(content).parseValue(true)
 
         /**
          * Parse a JSON stream into a JSON container or a simple value
@@ -253,9 +244,7 @@ interface Json {
          * @throws JsonException if parsing fails
          */
         @Throws(JsonException::class)
-        fun parseValue(reader: Input): Any? {
-            return Parser(reader).parseValue(true)
-        }
+        fun parseValue(reader: Input) = Parser(reader).parseValue(true)
 
         /**
          * Commodity method to escape a JSON string
@@ -263,7 +252,7 @@ interface Json {
          * @return escaped string
          */
         @Throws(JsonException::class)
-        fun escape(str: String): String? {
+        fun escape(str: String): String {
             val output = StringOutput()
             Serializer.escapeJson(str, output)
             return output.toString()
@@ -275,9 +264,7 @@ interface Json {
          * @return converted object
          * @throws ClassCastException if input is not convertible to json
          */
-        fun toJson(obj: Any?): Json? {
-            return toSerializable(obj) as Json?
-        }
+        fun toJson(obj: Any?) = toSerializable(obj) as Json?
 
         /**
          * Tries to convert standard Java containers/objects to a Json value
@@ -431,137 +418,114 @@ interface Json {
          * @param  index index of the element to return
          * @return the element at the specified position as a String value
          */
-        fun getString(index: Int): String? {
-            return TypeUtils.toString(get(index))
-        }
+        fun getString(index: Int) = TypeUtils.toString(get(index))
 
         /**
          * Returns the element at the specified position as a Boolean value.
          * @param  index index of the element to return
          * @return the element at the specified position as a Boolean value
          */
-        fun getBoolean(index: Int): Boolean? {
-            return TypeUtils.toBoolean(get(index))
-        }
+        fun getBoolean(index: Int) = TypeUtils.toBoolean(get(index))
 
         /**
          * Returns the element at the specified position as a Character value.
          * @param  index index of the element to return
          * @return the element at the specified position as a Character value
          */
-        fun getChar(index: Int): Char? {
-            return TypeUtils.toChar(get(index))
-        }
+        fun getChar(index: Int) = TypeUtils.toChar(get(index))
 
         /**
          * Returns the element at the specified position as a Byte value.
          * @param  index index of the element to return
          * @return the element at the specified position as a Byte value
          */
-        fun getByte(index: Int): Byte? {
-            return TypeUtils.toByte(get(index))
-        }
+        fun getByte(index: Int) = TypeUtils.toByte(get(index))
 
         /**
          * Returns the element at the specified position as a Short value.
          * @param  index index of the element to return
          * @return the element at the specified position as a Short value
          */
-        fun getShort(index: Int): Short? {
-            return TypeUtils.toShort(get(index))
-        }
+        fun getShort(index: Int) = TypeUtils.toShort(get(index))
 
         /**
-         * Returns the element at the specified position as a Integer value.
+         * Returns the element at the specified position as an Integer value.
          * @param  index index of the element to return
-         * @return the element at the specified position as a Integer value
+         * @return the element at the specified position as an Integer value
          */
-        fun getInteger(index: Int): Int? {
-            return TypeUtils.toInt(get(index))
-        }
+        fun getInt(index: Int) = TypeUtils.toInt(get(index))
+
+        /**
+         * Returns the element at the specified position as an Integer value.
+         * @param  index index of the element to return
+         * @return the element at the specified position as an Integer value
+         */
+        inline fun getInteger(index: Int) = getInt(index)
+
 
         /**
          * Returns the element at the specified position as a Long value.
          * @param  index index of the element to return
          * @return the element at the specified position as a Long value
          */
-        fun getLong(index: Int): Long? {
-            return TypeUtils.toLong(get(index))
-        }
+        fun getLong(index: Int) = TypeUtils.toLong(get(index))
 
         /**
          * Returns the element at the specified position as a BigInteger value.
          * @param  index index of the element to return
          * @return the element at the specified position as a BigInteger value
          */
-        fun getBigInteger(index: Int): BigInteger? {
-            return TypeUtils.toBigInteger(get(index))
-        }
+        fun getBigInteger(index: Int) = TypeUtils.toBigInteger(get(index))
 
         /**
          * Returns the element at the specified position as a Float value.
          * @param  index index of the element to return
          * @return the element at the specified position as a Float value
          */
-        fun getFloat(index: Int): Float? {
-            return TypeUtils.toFloat(get(index))
-        }
+        fun getFloat(index: Int) = TypeUtils.toFloat(get(index))
 
         /**
          * Returns the element at the specified position as a Double value.
          * @param  index index of the element to return
          * @return the element at the specified position as a Double value
          */
-        fun getDouble(index: Int): Double? {
-            return TypeUtils.toDouble(get(index))
-        }
+        fun getDouble(index: Int) = TypeUtils.toDouble(get(index))
 
         /**
          * Returns the element at the specified position as a BigDecimal value.
          * @param  index index of the element to return
          * @return the element at the specified position as a BigDecimal value
          */
-        fun getBigDecimal(index: Int): BigDecimal? {
-            return TypeUtils.toBigDecimal(get(index))
-        }
+        fun getBigDecimal(index: Int) = TypeUtils.toBigDecimal(get(index))
 
         /**
          * Returns the element at the specified position as an Instant value.
          * @param  index index of the element to return
          * @return the element at the specified position as an Instant value
          */
-        fun getInstant(index: Int): Instant? {
-            return TypeUtils.toInstant(get(index))
-        }
+        fun getInstant(index: Int) = TypeUtils.toInstant(get(index))
 
         /**
          * Returns the element at the specified position as a LocalDateTime value.
          * @param  index index of the element to return
          * @return the element at the specified position as a LocalDateTime value
          */
-        fun getLocalDatetIME(index: Int): LocalDateTime? {
-            return TypeUtils.toLocalDateTime(get(index))
-        }
+        fun getLocalDateTime(index: Int) = TypeUtils.toLocalDateTime(get(index))
 
         /**
          * Returns the element at the specified position as a LocalDate value.
          * @param  index index of the element to return
          * @return the element at the specified position as a LocalDate value
          */
-        fun getLocalDate(index: Int): LocalDate? {
-            return TypeUtils.toLocalDate(get(index))
-        }
+        fun getLocalDate(index: Int) = TypeUtils.toLocalDate(get(index))
 
         /**
          * Returns the element at the specified position as a Json.Array value.
          * @param  index index of the element to return
          * @return the element at the specified position as a Json.Array value
-         * @throws ClassCastException if value is not a a Json.Array.
+         * @throws ClassCastException if value is not a Json.Array.
          */
-        fun getArray(index: Int): Array? {
-            val value = get(index)
-            return value as Array?
-        }
+        fun getArray(index: Int) = get(index) as Array?
 
         /**
          * Returns the element at the specified position as a Json.Object value.
@@ -569,10 +533,7 @@ interface Json {
          * @return the element at the specified position as a Json.Object value
          * @throws ClassCastException if value is not a a Json.Object.
          */
-        fun getObject(index: Int): Object? {
-            val value = get(index)
-            return value as Object?
-        }
+        fun getObject(index: Int) = get(index) as Object?
 
         /**
          * Returns the element at the specified position as a Json container.
@@ -580,30 +541,21 @@ interface Json {
          * @return the element at the specified position as a Json.Object value
          * @throws ClassCastException if value is not a a Json container.
          */
-        fun getJson(index: Int): Json? {
-            val value = get(index)
-            return value as Json?
-        }
+        fun getJson(index: Int) = get(index) as Json?
 
         /**
          * Appender returning self
          * @param elem element to add
          * @return the array
          */
-        fun push(elem: Any?): Array {
-            add(elem)
-            return this
-        }
+        fun push(elem: Any?) = apply { add(elem) }
 
         /**
          * Setter returning self (old value is lost)
          * @param elems elements to add to set
          * @return the array
          */
-        fun pushAll(elems: Collection<Any?>?): Array {
-            addAll(elems!!)
-            return this
-        }
+        fun pushAll(elems: Collection<Any?>) = apply { addAll(elems) }
 
         /**
          * Setter returning self (old value is lost)
@@ -611,10 +563,7 @@ interface Json {
          * @param elem element to set
          * @return the array
          */
-        fun put(index: Int, elem: Any?): Array {
-            set(index, elem)
-            return this
-        }
+        fun put(index: Int, elem: Any?) = apply { set(index, elem) }
 
         override fun copy(): Array {
             val myself = this
@@ -631,18 +580,22 @@ interface Json {
         }
 
         override fun equals(other: Any?): Boolean {
-            if (other == null) return false
-            if (other === this) return true
-            if (other !is Array) return false
-            if (other.size != size) return false
-            val it1 = iterator()
-            val it2 = other.iterator()
-            while (it1.hasNext()) {
-                val e1 = it1.next()
-                val e2 = it2.next()
-                if (e1 != e2) return false
+            return when {
+                other == null -> false
+                other === this -> true
+                other !is Array -> false
+                else -> {
+                    val it1 = iterator()
+                    val it2 = other.iterator()
+                    while (it1.hasNext()) {
+                        val e1 = it1.next()
+                        val e2 = it2.next()
+                        if (e1 != e2) return false
+                    }
+                    return true
+                }
+                
             }
-            return true
         }
     }
 
@@ -654,12 +607,12 @@ interface Json {
     open class Object(private val map: MutableMap<String, Any?>) : Json, MutableMap<String, Any?> by map,
             Iterable<Map.Entry<String, Any?>> {
         /**
-         * Builds an emepty Json.Object.
+         * Builds an empty Json.Object.
          */
         constructor() : this(LinkedHashMap())
 
         /**
-         * Builds a Json.Object with specified itemsas alternated keys and values
+         * Builds a Json.Object with specified items
          */
         constructor(vararg pairs: Pair<String, Any?>) : this(mutableMapOf(*pairs))
 
@@ -768,157 +721,129 @@ interface Json {
          *
          * @return an Iterator.
          */
-        override fun iterator(): Iterator<Map.Entry<String, Any?>> {
-            return entries.iterator()
-        }
+        override fun iterator() = entries.iterator()
 
         /**
          * Returns the element under the specified key as a String value.
          * @param  key key of the element to return
          * @return the element under the specified key as a String value or null if the key doesn't exist
          */
-        fun getString(key: String): String? {
-            return TypeUtils.toString(get(key))
-        }
+        fun getString(key: String) = TypeUtils.toString(get(key))
+
 
         /**
          * Returns the element under the specified key as a Boolean value.
          * @param  key key of the element to return
          * @return the element under the specified key as a Boolean value or null if the key doesn't exist
          */
-        fun getBoolean(key: String): Boolean? {
-            return TypeUtils.toBoolean(get(key))
-        }
+        fun getBoolean(key: String) = TypeUtils.toBoolean(get(key))
 
         /**
          * Returns the element under the specified key as a Character value.
          * @param  key key of the element to return
          * @return the element under the specified key as a Character value or null if the key doesn't exist
          */
-        fun getChar(key: String): Char? {
-            return TypeUtils.toChar(get(key))
-        }
+        fun getChar(key: String) = TypeUtils.toChar(get(key))
 
         /**
          * Returns the element under the specified key as a Byte value.
          * @param  key key of the element to return
          * @return the element under the specified key as a Byte value or null if the key doesn't exist
          */
-        fun getByte(key: String): Byte? {
-            return TypeUtils.toByte(get(key))
-        }
+        fun getByte(key: String) = TypeUtils.toByte(get(key))
 
         /**
          * Returns the element under the specified key as a Short value.
          * @param  key key of the element to return
          * @return the element under the specified key as a Short value or null if the key doesn't exist
          */
-        fun getShort(key: String): Short? {
-            return TypeUtils.toShort(get(key))
-        }
+        fun getShort(key: String) = TypeUtils.toShort(get(key))
 
         /**
-         * Returns the element under the specified key as a Integer value.
+         * Returns the element under the specified key as an Integer value.
          * @param  key key of the element to return
-         * @return the element under the specified key as a Integer value or null if the key doesn't exist
+         * @return the element under the specified key as an Integer value or null if the key doesn't exist
          */
-        fun getInteger(key: String): Int? {
-            return TypeUtils.toInt(get(key))
-        }
+        fun getInt(key: String) = TypeUtils.toInt(get(key))
+
+        /**
+         * Returns the element under the specified key as an Integer value.
+         * @param  key key of the element to return
+         * @return the element under the specified key as an Integer value or null if the key doesn't exist
+         */
+        fun getInteger(key: String) = getInt(key)
 
         /**
          * Returns the element under the specified key as a Long value.
          * @param  key key of the element to return
          * @return the element under the specified key as a Long value or null if the key doesn't exist
          */
-        fun getLong(key: String): Long? {
-            return TypeUtils.toLong(get(key))
-        }
+        fun getLong(key: String) = TypeUtils.toLong(get(key))
 
         /**
          * Returns the element under the specified key as a BigInteger value.
          * @param  key key of the element to return
          * @return the element under the specified key as a BigInteger value or null if the key doesn't exist
          */
-        fun getBigInteger(key: String): BigInteger? {
-            return TypeUtils.toBigInteger(get(key))
-        }
+        fun getBigInteger(key: String) = TypeUtils.toBigInteger(get(key))
 
         /**
          * Returns the element under the specified key as a Float value.
          * @param  key key of the element to return
          * @return the element under the specified key as a Float value or null if the key doesn't exist
          */
-        fun getFloat(key: String): Float? {
-            return TypeUtils.toFloat(get(key))
-        }
+        fun getFloat(key: String) = TypeUtils.toFloat(get(key))
 
         /**
          * Returns the element under the specified key as a Double value.
          * @param  key key of the element to return
          * @return the element under the specified key as a Double value or null if the key doesn't exist
          */
-        fun getDouble(key: String): Double? {
-            return TypeUtils.toDouble(get(key))
-        }
+        fun getDouble(key: String) = TypeUtils.toDouble(get(key))
 
         /**
          * Returns the element under the specified key as a BigDecimal value.
          * @param  key key of the element to return
          * @return the element under the specified key as a BigDecimal value or null if the key doesn't exist
          */
-        fun getBigDecimal(key: String): BigDecimal? {
-            return TypeUtils.toBigDecimal(get(key))
-        }
+        fun getBigDecimal(key: String) = TypeUtils.toBigDecimal(get(key))
 
         /**
          * Returns the element under the specified key as an Instant value.
          * @param  key key of the element to return
          * @return the element at the specified position as an Instant value
          */
-        fun getInstant(key: String): Instant? {
-            return TypeUtils.toInstant(get(key))
-        }
+        fun getInstant(key: String) = TypeUtils.toInstant(get(key))
 
         /**
          * Returns the element under the specified key as a LocalDateTime value.
          * @param  key key of the element to return
          * @return the element at the specified position as a LocalDateTime value
          */
-        fun getLocalDatetIME(key: String): LocalDateTime? {
-            return TypeUtils.toLocalDateTime(get(key))
-        }
+        fun getLocalDateTime(key: String) = TypeUtils.toLocalDateTime(get(key))
 
         /**
          * Returns the element under the specified key as a LocalDate value.
          * @param  key key of the element to return
          * @return the element at the specified position as a LocalDate value
          */
-        fun getLocalDate(key: String): LocalDate? {
-            return TypeUtils.toLocalDate(get(key))
-        }
+        fun getLocalDate(key: String) = TypeUtils.toLocalDate(get(key))
 
         /**
          * Returns the element under the specified key as a Json.Array value.
          * @param  key key of the element to return
          * @return the element under the specified key as a Json.Array value or null if the key doesn't exist
-         * @throws ClassCastException if value is not a a Jon.Array.
+         * @throws ClassCastException if value is not a Jon.Array.
          */
-        fun getArray(key: String): Array? {
-            val value = get(key)
-            return value as Array?
-        }
+        fun getArray(key: String) = get(key) as Array?
 
         /**
          * Returns the element under the specified key as a Json.Object value.
          * @param  key key of the element to return
          * @return the element under the specified key as a Json.Object value or null if the key doesn't exist
-         * @throws ClassCastException if value is not a a Jon.Object.
+         * @throws ClassCastException if value is not a Jon.Object.
          */
-        fun getObject(key: String): Object? {
-            val value = get(key)
-            return value as Object?
-        }
+        fun getObject(key: String) = get(key) as Object?
 
         /**
          * Returns the element under the specified key as a Json container.
@@ -926,10 +851,7 @@ interface Json {
          * @return the element at the specified position as a Json.Object value
          * @throws ClassCastException if value is not a a Json container.
          */
-        fun getJson(key: String): Json? {
-            val value = get(key)
-            return value as Json?
-        }
+        fun getJson(key: String) = get(key) as Json?
 
         /**
          * Setter returning self (old value, if any, is lost)
@@ -937,20 +859,14 @@ interface Json {
          * @param elem element to set
          * @return the object
          */
-        operator fun set(key: String, elem: Any?): Object {
-            put(key, elem)
-            return this
-        }
+        operator fun set(key: String, elem: Any?) = apply { put(key, elem) }
 
         /**
          * Setter returning self
          * @param elems elements to add
          * @return the object
          */
-        fun setAll(elems: Map<out String, Any?>): Object {
-            putAll(elems)
-            return this
-        }
+        fun setAll(elems: Map<out String, Any?>) = apply { putAll(elems) }
 
         override fun copy(): Object {
             val myself = this
@@ -1077,23 +993,15 @@ interface Json {
     /**
      * JSON parser.
      */
-    private class Parser {
+    private class Parser(val input: Input) {
 
-        constructor (input : Input) {
-            this.input = input
-        }
-
-        constructor (source : String) {
-            this.input = StringInput(source)
-        }
+        constructor (source : String): this(StringInput(source))
 
         companion object {
             const val MIN_LONG_DECILE = Long.MIN_VALUE / 10
             const val EOF = (-1).toChar()
-
         }
 
-        private var input : Input
         private var row = 1
         private var col = 0
         private var ch : Char = 0.toChar()
@@ -1216,7 +1124,7 @@ interface Json {
         fun parseValue(complete: Boolean = false): Any? {
             skipWhiteSpace()
             val ret: Any? = when (ch) {
-                EOF -> throw error("unexpecting end of stream")
+                EOF -> throw error("unexpected end of stream")
                 '"' -> parseString()
                 '[' -> parseArray()
                 '{' -> parseObject()
@@ -1224,7 +1132,7 @@ interface Json {
                 'f' -> parseKeyword("false", false)
                 'n' -> parseKeyword("null", null)
                 '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> parseNumber()
-                else -> throw error("unexpected chararcter: '" + display(ch) + "'")
+                else -> throw error("unexpected character: '" + display(ch) + "'")
             }
             if (complete) {
                 skipWhiteSpace()
@@ -1257,33 +1165,32 @@ interface Json {
             while (true) {
                 while (pos < buffer.size) {
                     buffer[pos++] = next()
-                    if (ch == '"') {
-                        return builder?.appendRange(buffer, 0, pos - 1)?.toString() ?: buffer.concatToString(0, pos - 1)
-                    } else if (ch == '\\') {
-                        if (builder == null) {
-                            builder = StringBuilder(max(2 * pos, 16))
-                        }
-                        builder.append(buffer, 0, pos - 1)
-                        pos = 0
-                        var c = parseEscapeSequence()
-                        builder.append(c)
-                        if (c.isHighSurrogate()) {
-                            ch = next()
-                            if (ch != '\\') {
-                                throw error("low surrogate escape sequence expected")
+                    when {
+                        ch == '"' -> return builder?.appendRange(buffer, 0, pos - 1)?.toString() ?: buffer.concatToString(0, pos - 1)
+                        ch == '\\' -> {
+                            if (builder == null) {
+                                builder = StringBuilder(max(2 * pos, 16))
                             }
-                            c = parseEscapeSequence()
+                            builder.append(buffer, 0, pos - 1)
+                            pos = 0
+                            var c = parseEscapeSequence()
                             builder.append(c)
-                            if (!c.isLowSurrogate()) {
-                                throw error("low surrogate escape sequence expected")
+                            if (c.isHighSurrogate()) {
+                                ch = next()
+                                if (ch != '\\') {
+                                    throw error("low surrogate escape sequence expected")
+                                }
+                                c = parseEscapeSequence()
+                                builder.append(c)
+                                if (!c.isLowSurrogate()) {
+                                    throw error("low surrogate escape sequence expected")
+                                }
+                            } else if (c.isLowSurrogate()) {
+                                throw error("lone low surrogate escape sequence unexpected")
                             }
-                        } else if (c.isLowSurrogate()) {
-                            throw error("lone low surrogate escape sequence unexpected")
                         }
-                    } else if (ch == EOF) {
-                        throw error("unterminated string")
-                    } else if (ch < ' ') {
-                        throw error("unescaped control character")
+                        ch == EOF -> throw error("unterminated string")
+                        ch < ' ' -> throw error("unescaped control character")
                     }
                 }
                 if (builder == null) {
@@ -1329,7 +1236,7 @@ interface Json {
         }
 
         @Throws(JsonException::class)
-        private fun parseNumber(): Any? {
+        private fun parseNumber(): Any {
             // inspired from com.google.gson.stream.JsonReader, but much more readable
             // and handle Double/BigDecimal alternatives
             val number: Any
@@ -1343,7 +1250,7 @@ interface Json {
             // sign
             if (ch == '-') {
                 negative = true
-                buffer[pos++] = ch.toChar()
+                buffer[pos++] = ch
                 if (next() == EOF) {
                     throw error("malformed number")
                 }
@@ -1423,7 +1330,7 @@ interface Json {
                 if (!ch.isDigit()) {
                     break
                 }
-                buffer[pos++] = ch.toChar()
+                buffer[pos++] = ch
                 ++len
                 next()
             }

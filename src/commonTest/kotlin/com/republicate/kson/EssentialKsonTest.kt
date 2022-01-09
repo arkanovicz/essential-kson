@@ -707,7 +707,7 @@ class EssentialJsonTest : BaseTestUnit()
         startTiming()
         val output : String = when(instance) {
                 null -> "null"
-                is String -> Json.escape(instance)!!
+                is String -> Json.escape(instance)
                 else -> instance.toString()
         }
         stopTiming()

@@ -12,7 +12,7 @@ import kotlinx.coroutines.GlobalScope
 val client = HttpClient()
 
 actual suspend fun getResource(path: String) : String {
-    var content = GlobalScope.async {
+    val content = GlobalScope.async {
         client.get<String> { url(path) }
     }
     return content.await()

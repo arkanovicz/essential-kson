@@ -1,17 +1,16 @@
 plugins {
-    kotlin("multiplatform") version "1.5.31"
-    id("org.jetbrains.dokka") version "1.5.0"
+    kotlin("multiplatform") version "1.6.10"
+    id("org.jetbrains.dokka") version "1.6.10"
     `maven-publish`
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
     signing
 }
 
 group = "com.republicate.kson"
-version = "1.2"
+version = "1.3"
 
 repositories {
     mavenCentral()
-//    maven("https://republicate.com/maven2") // for kmath
 }
 
 apply(plugin = "io.github.gradle-nexus.publish-plugin")
@@ -59,9 +58,8 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
-//                api("space.kscience:kmath-core:0.3.0-dev-17")
                 implementation("com.ionspin.kotlin:bignum:0.3.3")
-                implementation("io.github.microutils:kotlin-logging:2.0.11")
+                implementation("io.github.microutils:kotlin-logging:2.1.21")
             }
         }
         val commonTest by getting {
@@ -69,8 +67,8 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
-                implementation("io.ktor:ktor-client-core:1.6.5")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+                implementation("io.ktor:ktor-client-core:1.6.7")
             }
         }
         val jvmMain by getting
