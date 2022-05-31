@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.republicate.kson"
-version = "1.4"
+version = "2.0"
 
 repositories {
     mavenCentral()
