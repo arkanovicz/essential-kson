@@ -302,7 +302,7 @@ interface Json {
      * Json.Array
      * Non-copy constructor from a provided mutable list
      */
-    open class Array(private val lst: MutableList<Any?>) : Json, MutableList<Any?> by lst {
+    open class Array(internal val lst: MutableList<Any?>) : Json, List<Any?> by lst {
         /**
          * Builds an empty Json.Array.
          */
@@ -342,8 +342,6 @@ interface Json {
          * @throws IllegalStateException otherwise
          */
         override fun ensureIsArray() {}
-
-//        override fun size() = lst.size()
 
         /**
          * Check that the underlying container is an object.
@@ -548,31 +546,9 @@ interface Json {
          */
         fun getJson(index: Int) = get(index) as Json?
 
-        /**
-         * Appender returning self
-         * @param elem element to add
-         * @return the array
-         */
-        fun push(elem: Any?) = apply { add(elem) }
-
-        /**
-         * Setter returning self (old value is lost)
-         * @param elems elements to add to set
-         * @return the array
-         */
-        fun pushAll(elems: Collection<Any?>) = apply { addAll(elems) }
-
-        /**
-         * Setter returning self (old value is lost)
-         * @param index index of new element
-         * @param elem element to set
-         * @return the array
-         */
-        fun put(index: Int, elem: Any?) = apply { set(index, elem) }
-
         override fun copy(): Array {
             val myself = this
-            val clone = newArray().apply { addAll(myself) }
+            val clone = MutableArray().apply { addAll(myself) }
             for (i in clone.indices) {
                 // we make the assumption that an object is either Json or immutable (so already there)
                 var value = get(i)
@@ -602,6 +578,35 @@ interface Json {
                 
             }
         }
+    }
+
+    open class MutableArray(l: MutableList<Any?> = mutableListOf()): Array(l), MutableList<Any?> by super.lst {
+        /**
+         * Appender returning self
+         * @param elem element to add
+         * @return the array
+         */
+        fun push(elem: Any?) = apply { add(elem) }
+
+        fun foo(): MutableList<Any> = mutableListOf()
+
+        /**
+         * Setter returning self (old value is lost)
+         * @param elems elements to add to set
+         * @return the array
+         */
+        fun pushAll(elems: Collection<Any?>) = apply { addAll(elems) }
+
+        /**
+         * Setter returning self (old value is lost)
+         * @param index index of new element
+         * @param elem element to set
+         * @return the array
+         */
+        fun put(index: Int, elem: Any?) = apply { set(index, elem) }
+
+        override fun copy(): MutableArray = super.copy() as MutableArray
+
     }
 
     /**
