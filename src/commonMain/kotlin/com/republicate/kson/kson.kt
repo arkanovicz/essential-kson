@@ -302,7 +302,7 @@ interface Json {
      * Json.Array
      * Non-copy constructor from a provided mutable list
      */
-    open class Array(internal val lst: MutableList<Any?>) : Json, List<Any?> by lst {
+    open class Array(internal val lst: MutableList<Any?>, dummy: Boolean = true) : Json, List<Any?> by lst {
         /**
          * Builds an empty Json.Array.
          */
@@ -614,7 +614,7 @@ interface Json {
      * Json.Object
      * Non-copy constructor from a provided mutable map.
      */
-    open class Object(private val map: MutableMap<String, Any?>) : Json, MutableMap<String, Any?> by map,
+    open class Object(private val map: MutableMap<String, Any?>, dummy: Boolean = true) : Json, MutableMap<String, Any?> by map,
             Iterable<Map.Entry<String, Any?>> {
         /**
          * Builds an empty Json.Object.
