@@ -106,31 +106,44 @@ interface Json {
      * @return true if underlying container is an array, false otherwise
      */
     val isArray: Boolean
+        get() = this is Array
 
     /**
      * Check if the underlying container is an object.
      * @return true if underlying container is an object, false otherwise
      */
     val isObject: Boolean
+        get() = this is Object
+
+    /**
+     * Check if the underlying container is mutable
+     * @return true if underlying container is mutable, false otherwise
+     */
+    val isMutable: Boolean
+        get() = this is MutableArray || this is MutableObject
 
     /**
      * Ensure that the underlying container is an array.
      * @throws IllegalStateException otherwise
      */
-    fun ensureIsArray()
+    fun ensureIsArray() {
+        if (!isArray) throw IllegalStateException("Json is not an array")
+    }
 
     /**
      * Ensure that the underlying container is an object.
      * @throws IllegalStateException otherwise
      */
-    fun ensureIsObject()
+    fun ensureIsObject() {
+        if (!isObject) throw IllegalStateException("Json is not an object")
+    }
 
     /**
      * Get self as an Array
      * @return self as a Jon.Array
      * @throws IllegalStateException if container is not an Array
      */
-    fun asArray(): Array? {
+    fun asArray(): Array {
         ensureIsArray()
         return this as Array
     }
@@ -140,7 +153,7 @@ interface Json {
      * @return self as a Json.Object
      * @throws IllegalStateException if container is not an Object
      */
-    fun asObject(): Object? {
+    fun asObject(): Object {
         ensureIsObject()
         return this as Object
     }
@@ -216,18 +229,6 @@ interface Json {
         @Throws(JsonException::class)
         fun parse(input: Input) = Parser(input).parse()
 
-        /** creates a new Json.Object
-         *
-         * @return new Json.Object
-         */
-        fun newObject(vararg elements: Pair<String, Any?>) = Object(*elements)
-
-        /** creates a new Json.Array
-         *
-         * @return new Json.Object
-         */
-        fun newArray(vararg elements: Any?) = Array(*elements)
-
         /**
          * Parse a JSON stream into a JSON container or simple value
          * @param content JSON content
@@ -264,7 +265,7 @@ interface Json {
          * @return converted object
          * @throws ClassCastException if input is not convertible to json
          */
-        fun toJson(obj: Any?) = toSerializable(obj) as Json?
+        fun toJson(obj: Any?) = toJsonOrIntegral(obj) as Json?
 
         /**
          * Tries to convert standard Java containers/objects to a Json value
@@ -272,23 +273,14 @@ interface Json {
          * @return converted object
          * @throws ClassCastException if input is not convertible to json
          */
-        fun toSerializable(obj: Any?): Any? =
+        fun toJsonOrIntegral(obj: Any?): Any? =
                 when (obj) {
-                    is Map<*, *> -> {
-                        val ret = Object()
-                        for ((key, value) in obj.entries) {
-                            ret[key as String] = toSerializable(value)
-                        }
-                        ret
-                    }
-                    is Collection<*> -> {
-                        val ret = Array()
-                        for (elem in obj) {
-                            ret.add(toSerializable(elem))
-                        }
-                        ret
-                    }
-                    else -> null
+                    null -> null
+                    is Number, Boolean, String -> obj
+                    is Json-> obj
+                    is Map<*, *> -> obj.entries.map { it.key.toString() to toJsonOrIntegral(it.value) }.toMap(MutableObject())
+                    is Collection<*> -> obj.mapTo(MutableArray()) { toJsonOrIntegral(it) }
+                    else -> obj.toString()
                 }
 
         /**
@@ -302,7 +294,7 @@ interface Json {
      * Json.Array
      * Non-copy constructor from a provided mutable list
      */
-    open class Array(internal val lst: MutableList<Any?>, dummy: Boolean = true) : Json, List<Any?> by lst {
+    open class Array(internal open val lst: MutableList<Any?>, dummy: Boolean = true) : Json, List<Any?> by lst {
         /**
          * Builds an empty Json.Array.
          */
@@ -322,34 +314,6 @@ interface Json {
          * Builds a Json.Array with the content of an existing collection.
          */
         constructor(collection: Collection<Any?>) : this(collection.toMutableList())
-
-        /**
-         * Check if the underlying container is an array.
-         *
-         * @return true if underlying container is an array, false otherwise
-         */
-        override val isArray = true
-
-        /**
-         * Check if the underlying container is an object.
-         *
-         * @return true if underlying container is an object, false otherwise
-         */
-        override val isObject = false
-
-        /**
-         * Check that the underlying container is an array.
-         * @throws IllegalStateException otherwise
-         */
-        override fun ensureIsArray() {}
-
-        /**
-         * Check that the underlying container is an object.
-         * @throws IllegalStateException otherwise
-         */
-        override fun ensureIsObject() {
-            throw IllegalStateException("container must be a JSON object")
-        }
 
         /**
          * Writes a representation of this container to the specified writer.
@@ -546,18 +510,8 @@ interface Json {
          */
         fun getJson(index: Int) = get(index) as Json?
 
-        override fun copy(): Array {
-            val myself = this
-            val clone = MutableArray().apply { addAll(myself) }
-            for (i in clone.indices) {
-                // we make the assumption that an object is either Json or immutable (so already there)
-                var value = get(i)
-                if (value is Json) {
-                    value = value.copy()
-                    clone.put(i, value)
-                }
-            }
-            return clone
+        override fun copy() = lst.mapTo(MutableArray()) { v ->
+            if (v is Json) v.copy() else v
         }
 
         override fun equals(other: Any?): Boolean {
@@ -580,15 +534,34 @@ interface Json {
         }
     }
 
-    open class MutableArray(l: MutableList<Any?> = mutableListOf()): Array(l), MutableList<Any?> by super.lst {
+    open class MutableArray(override val lst: MutableList<Any?>, dummy: Boolean = true): Array(lst), MutableList<Any?> by lst {
+
+        /**
+         * Builds an empty Json.Array.
+         */
+        constructor() : this(ArrayList())
+
+        /**
+         * Builds a Json.Array from the provided immutable list
+         */
+        constructor(coll: List<*>) : this(ArrayList(coll))
+
+        /**
+         * Builds a Json.Array with specified items
+         */
+        constructor(vararg items: Any?) : this(mutableListOf(*items))
+
+        /**
+         * Builds a Json.Array with the content of an existing collection.
+         */
+        constructor(collection: Collection<Any?>) : this(collection.toMutableList())
+
         /**
          * Appender returning self
          * @param elem element to add
          * @return the array
          */
         fun push(elem: Any?) = apply { add(elem) }
-
-        fun foo(): MutableList<Any> = mutableListOf()
 
         /**
          * Setter returning self (old value is lost)
@@ -614,7 +587,7 @@ interface Json {
      * Json.Object
      * Non-copy constructor from a provided mutable map.
      */
-    open class Object(private val map: MutableMap<String, Any?>, dummy: Boolean = true) : Json, MutableMap<String, Any?> by map,
+    open class Object(internal open val map: MutableMap<String, Any?>, dummy: Boolean = true) : Json, Map<String, Any?> by map,
             Iterable<Map.Entry<String, Any?>> {
         /**
          * Builds an empty Json.Object.
@@ -630,35 +603,6 @@ interface Json {
          * Builds a Json.Object with specified items
          */
         constructor(vararg pairs: Pair<String, Any?>) : this(mutableMapOf(*pairs))
-
-        /**
-         * Check if the underlying container is an array.
-         *
-         * @return true if underlying container is an array, false otherwise
-         */
-        override val isArray = false
-
-
-        /**
-         * Check if the underlying container is an object.
-         *
-         * @return true if underlying container is an object, false otherwise
-         */
-        override val isObject = false
-
-        /**
-         * Check that the underlying container is an array.
-         * @throws IllegalStateException otherwise
-         */
-        override fun ensureIsArray() {
-            throw IllegalStateException("container must be a JSON array")
-        }
-
-        /**
-         * Check that the underlying container is an object.
-         * @throws IllegalStateException otherwise
-         */
-        override fun ensureIsObject() {}
 
         /**
          * Writes a representation of this container to the specified writer.
@@ -868,32 +812,9 @@ interface Json {
          */
         fun getJson(key: String) = get(key) as Json?
 
-        /**
-         * Setter returning self (old value, if any, is lost)
-         * @param key of new element
-         * @param elem element to set
-         * @return the object
-         */
-        operator fun set(key: String, elem: Any?) = apply { put(key, elem) }
-
-        /**
-         * Setter returning self
-         * @param elems elements to add
-         * @return the object
-         */
-        fun setAll(elems: Map<out String, Any?>) = apply { putAll(elems) }
-
-        override fun copy(): Object {
-            val myself = this
-            val clone = newObject().apply { putAll(myself) }
-            for (entry in entries) {
-                var value = entry.value
-                if (value is Json) {
-                    value = value.copy()
-                    entry.setValue(value)
-                }
-            }
-            return clone
+        override fun copy() = map.mapValuesTo(MutableObject()) { e ->
+            val value = e.value
+            if (value is Json) value.copy() else value
         }
 
         override fun equals(other: Any?): Boolean {
@@ -910,6 +831,42 @@ interface Json {
             }
             return true
         }
+
+    }
+
+    open class MutableObject(override val map: MutableMap<String, Any?>, dummy: Boolean = true): Object(map), MutableMap<String, Any?> by map {
+
+        /**
+         * Builds an empty Json.Object.
+         */
+        constructor(): this(LinkedHashMap())
+
+        /**
+         * Builds a Json MutableObject by copying the provided immutable map
+         */
+        constructor(map: Map<String, Any?>) : this(LinkedHashMap(map))
+
+        /**
+         * Builds a Json.MutableObject with specified items
+         */
+        constructor(vararg pairs: Pair<String, Any?>) : this(mutableMapOf(*pairs))
+
+
+        /**
+         * Setter returning self (old value, if any, is lost)
+         * @param key of new element
+         * @param elem element to set
+         * @return the object
+         */
+        operator fun set(key: String, elem: Any?) = apply { put(key, elem) }
+
+        /**
+         * Setter returning self
+         * @param elems elements to add
+         * @return the object
+         */
+        fun setAll(elems: Map<out String, Any?>) = apply { putAll(elems) }
+
 
     }
 
@@ -1092,8 +1049,8 @@ interface Json {
         }
 
         @Throws(JsonException::class)
-        private fun parseArray(): Array {
-            val ret = Array()
+        private fun parseArray(): MutableArray {
+            val ret = MutableArray()
             skipWhiteSpace()
             if (ch != ']') {
                 back()
@@ -1111,8 +1068,8 @@ interface Json {
         }
 
         @Throws(JsonException::class)
-        private fun parseObject(): Object {
-            val ret = Object()
+        private fun parseObject(): MutableObject {
+            val ret = MutableObject()
             skipWhiteSpace()
             if (ch != '}') {
                 main@ while (true) {
@@ -1479,3 +1436,10 @@ interface Json {
         }
     }
 }
+
+/* Extension functions */
+
+fun <T> List<T>.toJsonArray() = Json.toJson(this) as Json.Array
+fun <T> List<T>.toMutableJsonArray() = Json.toJson(this) as Json.MutableArray
+fun <K, V> Map<K, V>.toJsonObject() = Json.toJson(this) as Json.Object
+fun <K, V> Map<K, V>.toMutableJsonObject() = Json.toJson(this) as Json.MutableObject

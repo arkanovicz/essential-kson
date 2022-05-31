@@ -734,7 +734,7 @@ class EssentialJsonTest : BaseTestUnit()
 
     @Test
     fun testEqualsJson() = runTest {
-        val o1 = Json.Object()
+        val o1 = Json.MutableObject()
         o1.put("foo", "bar")
         o1.put("bar", 45.65)
         o1.put("baz", Json.Array(1L, 2L, 3L))
