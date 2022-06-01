@@ -219,13 +219,21 @@ interface Json {
         /** creates a new Json.Object
          *
          * @return new Json.Object
+         * @deprecated use Json.Object(elements)
          */
+        @Deprecated("Use plain constructor Json.Object()",
+            ReplaceWith("Json.Object(elements)", "com.republicate.kson.Json")
+        )
         fun newObject(vararg elements: Pair<String, Any?>) = Object(*elements)
 
         /** creates a new Json.Array
          *
          * @return new Json.Object
+         * @deprecated use Json.Array(elements)
          */
+        @Deprecated("Use plain constructor Json.Array()",
+            ReplaceWith("Json.Array(elements)", "com.republicate.kson.Json")
+        )
         fun newArray(vararg elements: Any?) = Array(*elements)
 
         /**
@@ -271,25 +279,37 @@ interface Json {
          * @param obj object to convert
          * @return converted object
          * @throws ClassCastException if input is not convertible to json
+         * @deprecated use Json.toJsonOrIntegral(obj)
          */
-        fun toSerializable(obj: Any?): Any? =
-                when (obj) {
-                    is Map<*, *> -> {
-                        val ret = Object()
-                        for ((key, value) in obj.entries) {
-                            ret[key as String] = toSerializable(value)
-                        }
-                        ret
+        @Deprecated("Use Json.toJsonOrIntegral(obj)",
+            ReplaceWith("Json.toJsonOrIntegral(obj)", "com.republicate.kson.Json")
+        )
+        fun toSerializable(obj: Any?): Any? = toJsonOrIntegral(obj)
+
+        /**
+         * Tries to convert standard collections and maps to Json
+         * @param obj object to convert
+         * @return converted object
+         * @throws ClassCastException if input is not convertible to json
+         */
+        fun toJsonOrIntegral(obj: Any?): Any? =
+            when (obj) {
+                is Map<*, *> -> {
+                    val ret = Object()
+                    for ((key, value) in obj.entries) {
+                        ret[key as String] = toJsonOrIntegral(value)
                     }
-                    is Collection<*> -> {
-                        val ret = Array()
-                        for (elem in obj) {
-                            ret.add(toSerializable(elem))
-                        }
-                        ret
-                    }
-                    else -> null
+                    ret
                 }
+                is Collection<*> -> {
+                    val ret = Array()
+                    for (elem in obj) {
+                        ret.add(toJsonOrIntegral(elem))
+                    }
+                    ret
+                }
+                else -> null
+            }
 
         /**
          * Indentation
@@ -302,21 +322,21 @@ interface Json {
      * Json.Array
      * Non-copy constructor from a provided mutable list
      */
-    open class Array(private val lst: MutableList<Any?>) : Json, MutableList<Any?> by lst {
+    open class Array(private val lst: MutableList<Any?>, dummy: Boolean) : Json, MutableList<Any?> by lst {
         /**
          * Builds an empty Json.Array.
          */
-        constructor() : this(ArrayList())
+        constructor() : this(ArrayList<Any?>())
 
         /**
          * Builds a Json.Array from the provided immutable list
          */
-        constructor(coll: List<*>) : this(ArrayList(coll))
+        constructor(coll: List<*>) : this(ArrayList(coll), true)
 
         /**
          * Builds a Json.Array with specified items
          */
-        constructor(vararg items: Any?) : this(listOf(*items))
+        constructor(vararg items: Any?) : this(mutableListOf(*items))
 
         /**
          * Builds a Json.Array with the content of an existing collection.
@@ -552,14 +572,18 @@ interface Json {
          * Appender returning self
          * @param elem element to add
          * @return the array
+         * @deprecated next version will distinguish Json.Object and Json.MutableObject
          */
+        @Deprecated("In next version, use Json.MutableArray.push(elem)")
         fun push(elem: Any?) = apply { add(elem) }
 
         /**
          * Setter returning self (old value is lost)
          * @param elems elements to add to set
          * @return the array
+         * @deprecated next version will distinguish Json.Object and Json.MutableObject
          */
+        @Deprecated("In next version, use Json.MutableArray.pushAll(elems)")
         fun pushAll(elems: Collection<Any?>) = apply { addAll(elems) }
 
         /**
@@ -567,7 +591,9 @@ interface Json {
          * @param index index of new element
          * @param elem element to set
          * @return the array
+         * @deprecated next version will distinguish Json.Object and Json.MutableObject
          */
+        @Deprecated("In next version, use Json.MutableArray.put(index, elem)")
         fun put(index: Int, elem: Any?) = apply { set(index, elem) }
 
         override fun copy(): Array {
@@ -609,22 +635,22 @@ interface Json {
      * Json.Object
      * Non-copy constructor from a provided mutable map.
      */
-    open class Object(private val map: MutableMap<String, Any?>) : Json, MutableMap<String, Any?> by map,
+    open class Object(private val map: MutableMap<String, Any?>, dummy: Boolean) : Json, MutableMap<String, Any?> by map,
             Iterable<Map.Entry<String, Any?>> {
         /**
          * Builds an empty Json.Object.
          */
-        constructor() : this(LinkedHashMap())
+        constructor() : this(LinkedHashMap(), true)
 
         /**
          * Builds a Json Object by copying the provided immutable map
          */
-        constructor(map: Map<String, Any?>) : this(LinkedHashMap(map))
+        constructor(map: Map<String, Any?>) : this(LinkedHashMap(map), true)
 
         /**
          * Builds a Json.Object with specified items
          */
-        constructor(vararg pairs: Pair<String, Any?>) : this(mutableMapOf(*pairs))
+        constructor(vararg pairs: Pair<String, Any?>) : this(mutableMapOf(*pairs), true)
 
         /**
          * Check if the underlying container is an array.
@@ -868,14 +894,18 @@ interface Json {
          * @param key of new element
          * @param elem element to set
          * @return the object
+         * @deprecated next version will distinguish Json.Object and Json.MutableObject
          */
+        @Deprecated("In next version, use Json.MutableObject.set(key, elem)")
         operator fun set(key: String, elem: Any?) = apply { put(key, elem) }
 
         /**
          * Setter returning self
          * @param elems elements to add
          * @return the object
+         * @deprecated next version will distinguish Json.Object and Json.MutableObject
          */
+        @Deprecated("In next version, use Json.MutableObject.setAll(elems)")
         fun setAll(elems: Map<out String, Any?>) = apply { putAll(elems) }
 
         override fun copy(): Object {
