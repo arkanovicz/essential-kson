@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.republicate.kson"
-version = "2.0"
+version = "2.0.1"
 
 repositories {
     mavenCentral()
@@ -58,7 +58,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
-                implementation("com.ionspin.kotlin:bignum:0.3.3")
+                api("com.ionspin.kotlin:bignum:0.3.3")
                 implementation("io.github.microutils:kotlin-logging:2.1.21")
             }
         }

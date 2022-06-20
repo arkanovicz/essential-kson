@@ -1,3 +1,7 @@
+# V2.0.1
+
++ fix: dependency to ionspin bignum library should be as an api
+
 # v2.0
 
 + make Array and Object immutable
