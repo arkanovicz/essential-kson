@@ -50,7 +50,6 @@ class JsonException(message: String?, cause: Throwable? = null) : Exception(mess
  * Json container
  *
  */
-@Suppress("unused")
 interface Json {
 
     /**
@@ -294,6 +293,7 @@ interface Json {
      * Json.Array
      * Non-copy constructor from a provided mutable list
      */
+    @Suppress("UNUSED_PARAMETER")
     open class Array(internal open val lst: MutableList<Any?>, dummy: Boolean = true) : Json, List<Any?> by lst {
         /**
          * Builds an empty Json.Array.
@@ -427,8 +427,8 @@ interface Json {
          * @param  index index of the element to return
          * @return the element at the specified position as an Integer value
          */
-        inline fun getInteger(index: Int) = getInt(index)
-
+        @Deprecated("Use getInt()", ReplaceWith("getInt(index)"))
+        fun getInteger(index: Int) = getInt(index)
 
         /**
          * Returns the element at the specified position as a Long value.
@@ -538,7 +538,7 @@ interface Json {
         }
     }
 
-    @Suppress("DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE")
+    @Suppress("DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE", "UNUSED_PARAMETER")
     open class MutableArray(override val lst: MutableList<Any?>, dummy: Boolean = true): Array(lst), MutableList<Any?> by lst {
 
         /**
@@ -583,7 +583,7 @@ interface Json {
          */
         fun put(index: Int, elem: Any?) = apply { set(index, elem) }
 
-        override fun copy(): MutableArray = super.copy() as MutableArray
+        override fun copy(): MutableArray = super.copy()
 
     }
 
@@ -592,6 +592,7 @@ interface Json {
      * Json.Object
      * Non-copy constructor from a provided mutable map.
      */
+    @Suppress("UNUSED_PARAMETER")
     open class Object(internal open val map: MutableMap<String, Any?>, dummy: Boolean = true) : Json, Map<String, Any?> by map,
             Iterable<Map.Entry<String, Any?>> {
         /**
@@ -843,7 +844,7 @@ interface Json {
 
     }
 
-    @Suppress("DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE")
+    @Suppress("DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE", "UNUSED_PARAMETER")
     open class MutableObject(override val map: MutableMap<String, Any?>, dummy: Boolean = true): Object(map), MutableMap<String, Any?> by map {
 
         /**
