@@ -532,8 +532,13 @@ interface Json {
                 
             }
         }
+
+        override fun hashCode(): Int {
+            return lst.hashCode()
+        }
     }
 
+    @Suppress("DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE")
     open class MutableArray(override val lst: MutableList<Any?>, dummy: Boolean = true): Array(lst), MutableList<Any?> by lst {
 
         /**
@@ -832,8 +837,13 @@ interface Json {
             return true
         }
 
+        override fun hashCode(): Int {
+            return map.hashCode()
+        }
+
     }
 
+    @Suppress("DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE")
     open class MutableObject(override val map: MutableMap<String, Any?>, dummy: Boolean = true): Object(map), MutableMap<String, Any?> by map {
 
         /**
