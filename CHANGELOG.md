@@ -4,6 +4,7 @@
 + new :inline reified accessors Array.getAs<T>(index) and Object.getAs<T>(key)
 + new: getLocalTime() accessors
 + bump dependencies and kotlin version
++ conversions are a little more strict
 
 # V2.0.1
 
