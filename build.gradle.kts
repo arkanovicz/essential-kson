@@ -1,13 +1,13 @@
 plugins {
-    kotlin("multiplatform") version "1.6.10"
-    id("org.jetbrains.dokka") version "1.6.10"
+    kotlin("multiplatform") version "1.7.10"
+    id("org.jetbrains.dokka") version "1.7.0"
     `maven-publish`
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
     signing
 }
 
 group = "com.republicate.kson"
-version = "2.0.1"
+version = "2.1"
 
 repositories {
     mavenCentral()
@@ -25,8 +25,8 @@ kotlin {
             // kotlin compiler compatibility options
             kotlinOptions {
                 jvmTarget = "1.8"
-                apiVersion = "1.5"
-                languageVersion = "1.5"
+                apiVersion = "1.7"
+                languageVersion = "1.7"
             }
         }
     }
@@ -41,13 +41,17 @@ kotlin {
                 }
             }
         }
-        // nodejs() what?!
+        nodejs {
+            testTask {
+
+            }
+        }
     }
 
      val hostOs = System.getProperty("os.name")
      val isMingwX64 = hostOs.startsWith("Windows")
      val nativeTarget = when {
-//         hostOs == "Mac OS X" -> macosX64("native")
+//         hostOs == "Mac OS X" -> macosX64("native") TODO
          hostOs == "Linux" -> linuxX64("native")
          isMingwX64 -> mingwX64("native")
          else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
@@ -57,18 +61,17 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
-                api("com.ionspin.kotlin:bignum:0.3.3")
-                implementation("io.github.microutils:kotlin-logging:2.1.21")
+                api("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
+                api("com.ionspin.kotlin:bignum:0.3.6")
+                implementation("io.github.microutils:kotlin-logging:2.1.23")
             }
         }
         val commonTest by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-                implementation("io.ktor:ktor-client-core:1.6.7")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3")
+                implementation("io.ktor:ktor-client-core:1.6.8")
             }
         }
         val jvmMain by getting

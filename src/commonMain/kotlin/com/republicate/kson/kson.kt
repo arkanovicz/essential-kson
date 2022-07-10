@@ -28,6 +28,9 @@ import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.ionspin.kotlin.bignum.integer.toBigInteger
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.atTime
 
 expect interface JsonSerializable
 
@@ -487,6 +490,13 @@ interface Json {
         fun getLocalDate(index: Int) = TypeUtils.toLocalDate(get(index))
 
         /**
+         * Returns the element at the specified position as a LocalTime value.
+         * @param  index index of the element to return
+         * @return the element at the specified position as a LocalTime value
+         */
+        fun getLocalTime(index: Int) = TypeUtils.toLocalTime(get(index))
+
+        /**
          * Returns the element at the specified position as a Json.Array value.
          * @param  index index of the element to return
          * @return the element at the specified position as a Json.Array value
@@ -509,6 +519,39 @@ interface Json {
          * @throws ClassCastException if value is not a a Json container.
          */
         fun getJson(index: Int) = get(index) as Json?
+
+        /**
+         * Returns the element the specified key as a reified type instance. Since this method
+         * needs a <code>when</code> clause to return the result, it does have a performance cost
+         * because of the branching.
+         * @param index key of the element to return
+         * @return the element at the specified location converted to the specified type, or null
+         */
+        @Suppress("UNCHECKED_CAST", "IMPLICIT_CAST_TO_ANY")
+        inline fun <reified T: Any> getAs(index: Int): T? {
+            return when (T::class) {
+                String::class -> getString(index)
+                Boolean::class -> getBoolean(index)
+                Char::class -> getChar(index)
+                Byte::class -> getByte(index)
+                Short::class -> getShort(index)
+                Int::class -> getInt(index)
+                Long::class -> getLong(index)
+                BigInteger::class -> getBigInteger(index)
+                Float::class -> getFloat(index)
+                Double::class -> getDouble(index)
+                BigDecimal::class -> getBigDecimal(index)
+                Instant::class -> getInstant(index)
+                LocalDateTime::class -> getLocalDateTime(index)
+                LocalDate::class -> getLocalDate(index)
+                LocalTime::class -> getLocalTime(index)
+                Array::class -> getArray(index)
+                Object::class -> getObject(index)
+                Json::class -> getJson(index)
+                else -> get(index) as T?
+            } as T?
+        }
+
 
         override fun copy() = lst.mapTo(MutableArray()) { v ->
             if (v is Json) v.copy() else v
@@ -795,28 +838,66 @@ interface Json {
         fun getLocalDate(key: String) = TypeUtils.toLocalDate(get(key))
 
         /**
+         * Returns the element at the specified position as a LocalTime value.
+         * @param  index index of the element to return
+         * @return the element at the specified position as a LocalTime value
+         */
+        fun getLocalTime(key: String) = TypeUtils.toLocalTime(get(key))
+
+        /**
          * Returns the element under the specified key as a Json.Array value.
          * @param  key key of the element to return
          * @return the element under the specified key as a Json.Array value or null if the key doesn't exist
-         * @throws ClassCastException if value is not a Jon.Array.
+         * @throws ClassCastException if value is not a Jon.Array or cannot be converted to a Json.Array..
          */
-        fun getArray(key: String) = get(key) as Array?
+        fun getArray(key: String) = toJson(get(key)) as Array?
 
         /**
          * Returns the element under the specified key as a Json.Object value.
          * @param  key key of the element to return
          * @return the element under the specified key as a Json.Object value or null if the key doesn't exist
-         * @throws ClassCastException if value is not a Jon.Object.
+         * @throws ClassCastException if value is not a Jon.Object or cannot be converted to a Json.Object.
          */
-        fun getObject(key: String) = get(key) as Object?
+        fun getObject(key: String) = toJson(get(key)) as Object?
 
         /**
          * Returns the element under the specified key as a Json container.
          * @param  key key of the element to return
          * @return the element at the specified position as a Json.Object value
-         * @throws ClassCastException if value is not a a Json container.
          */
-        fun getJson(key: String) = get(key) as Json?
+        fun getJson(key: String) = toJson(get(key))
+
+        /**
+         * Returns the element the specified key as a reified type instance. Since this method
+         * needs a <code>when</code> clause to return the result, it does have a performance cost
+         * because of the branching.
+         * @param key key of the element to return
+         * @return the element at the specified location converted to the specified type, or null
+         */
+        @Suppress("UNCHECKED_CAST", "IMPLICIT_CAST_TO_ANY")
+        inline fun <reified T: Any> getAs(key: String): T? {
+            return when (T::class) {
+                String::class -> getString(key)
+                Boolean::class -> getBoolean(key)
+                Char::class -> getChar(key)
+                Byte::class -> getByte(key)
+                Short::class -> getShort(key)
+                Int::class -> getInt(key)
+                Long::class -> getLong(key)
+                BigInteger::class -> getBigInteger(key)
+                Float::class -> getFloat(key)
+                Double::class -> getDouble(key)
+                BigDecimal::class -> getBigDecimal(key)
+                Instant::class -> getInstant(key)
+                LocalDateTime::class -> getLocalDateTime(key)
+                LocalDate::class -> getLocalDate(key)
+                LocalTime::class -> getLocalTime(key)
+                Array::class -> getArray(key)
+                Object::class -> getObject(key)
+                Json::class -> getJson(key)
+                else -> get(key) as T?
+            } as T?
+        }
 
         override fun copy() = map.mapValuesTo(MutableObject()) { e ->
             val value = e.value
@@ -1341,78 +1422,95 @@ interface Json {
 
         fun toChar(value: Any?): Char? =
             when (value) {
+                null -> null
                 is Boolean -> if (value) 't' else 'f'
                 is Char -> value
-                is String -> if (value.length == 1) value[0] else null
-                else -> null
+                is String -> if (value.length == 1) value[0] else throw JsonException("String cannot be converted to char, invalid length")
+                else -> throw JsonException("cannot convert this value to char")
             }
 
         fun toBoolean(value: Any?): Boolean? =
             when (value) {
+                null -> null
                 is Boolean -> value
                 is Number -> value.toLong() != 0L
-                is String -> when (value) {
-                    "true" -> true
-                    else -> false
-                    // also check 0/1 ?
+                't', 'T' -> true
+                'f', 'F' -> false
+                is String -> when (value.lowercase()) {
+                    "true", "t", "1" -> true
+                    "false", "f", "0" -> false
+                    else -> throw JsonException("cannot convert this string to boolean")
                 }
                 else -> null
             }
 
         fun toByte(value: Any?): Byte? =
             when (value) {
+                null -> null
+                is Boolean -> if (value) 1 else 0
                 is Number -> value.toByte()
                 is String -> value.toByte()
-                else -> null
+                else -> throw JsonException("cannot convert this value to byte")
             }
 
         fun toShort(value: Any?): Short? =
             when (value) {
+                null -> null
+                is Boolean -> if (value) 1 else 0
                 is Number -> value.toShort()
                 is String -> value.toShort()
-                else -> null
+                else -> throw JsonException("cannot convert this value to short")
             }
 
         fun toInt(value: Any?): Int? =
             when (value) {
+                null -> null
+                is Boolean -> if (value) 1 else 0
                 is Number -> value.toInt()
                 is String -> value.toInt()
-                else -> null
+                else -> throw JsonException("cannot convert this value to int")
             }
 
         fun toLong(value: Any?): Long? =
             when (value) {
+                null -> null
+                is Boolean -> if (value) 1L else 0L
                 is Number -> value.toLong()
                 is String -> value.toLong()
-                else -> null
+                else -> throw JsonException("cannot convert this value to long")
             }
 
         fun toBigInteger(value: Any?): BigInteger? =
             when (value) {
+                null -> null
+                is Boolean -> if (value) BigInteger.fromShort(1) else BigInteger.fromShort(0)
                 is Number -> value.toLong().toBigInteger()
                 is String -> BigInteger.parseString(value)
-                else -> null
+                else -> throw JsonException("cannot convert this value to big integer")
             }
 
         fun toFloat(value: Any?): Float? =
             when (value) {
+                null -> null
                 is Number -> value.toFloat()
                 is String -> value.toFloat()
-                else -> null
+                else -> throw JsonException("cannot convert this value to float")
             }
 
         fun toDouble(value: Any?): Double? =
             when (value) {
+                null -> null
                 is Number -> value.toDouble()
                 is String -> value.toDouble()
-                else -> null
+                else -> throw JsonException("cannot convert this value to double")
             }
 
         fun toBigDecimal(value: Any?): BigDecimal? =
             when (value) {
+                null -> null
                 is Number -> value.toDouble().toBigDecimal()
                 is String -> BigDecimal.parseString(value)
-                else -> null
+                else -> throw JsonException("cannot convert this value to big decimal")
             }
 
 
@@ -1421,23 +1519,33 @@ interface Json {
                 null -> null
                 is Instant -> value
                 is String -> Instant.parse(value)
-                else -> null
+                else -> throw JsonException("cannot convert this value to instant")
             }
 
         fun toLocalDateTime(value: Any?): LocalDateTime? =
             when(value) {
                 null -> null
+                is LocalDate -> value.atTime(0, 0)
                 is LocalDateTime -> value
                 is String -> LocalDateTime.parse(value)
-                else -> null
+                else -> throw JsonException("cannot convert this value to local datetime")
             }
 
         fun toLocalDate(value: Any?): LocalDate? =
             when(value) {
                 null -> null
                 is LocalDate -> value
+                is LocalDateTime -> value.date
                 is String -> LocalDate.parse(value)
-                else -> null
+                else -> throw JsonException("cannot convert this value to local date")
+            }
+
+        fun toLocalTime(value: Any?): LocalTime? =
+            when(value) {
+                null -> null
+                is LocalTime -> value
+                is String -> LocalTime.parse(value)
+                else -> throw JsonException("cannot convert this value to local time")
             }
 
         fun toBytes(value: Any?): ByteArray? {

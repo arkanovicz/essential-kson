@@ -1,8 +1,17 @@
 package com.republicate.kson
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import com.ionspin.kotlin.bignum.integer.BigInteger
+// import kotlinx.datetime.DateTimeParseException
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlin.test.Test
 import mu.KotlinLogging
+import kotlin.reflect.KClass
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlin.test.fail
 
 private val logger = KotlinLogging.logger { "test" }
@@ -748,5 +757,93 @@ class EssentialJsonTest : BaseTestUnit()
         val parsed = Json.parse(payload)?.asObject()
         val toString = parsed.toString()
         assertEquals(payload, toString)
+    }
+
+    private fun expect(exp: Any?, op: () -> Any?) {
+        when (exp) {
+            ignoreEvaluation -> return
+            is KClass<*> -> {
+                try {
+                    val v = op()
+                    fail("was expecting ${exp.simpleName}, got $v")
+                } catch (t: Throwable) {
+                    assertTrue(exp.isInstance(t), "was expecting ${exp.simpleName}, got ${t::class.simpleName}: ${t.message}")
+                }
+            }
+            else -> {
+                try {
+                    val v = op()
+                    if (exp != ignoreResult) assertEquals(exp, v, "was expecting <$exp>, got <$v>")
+                } catch (assertError: AssertionError) {
+                        throw assertError
+                } catch (t: Throwable) {
+                    fail("was expecting $exp, got ${t::class.simpleName}")
+                }
+            }
+        }
+    }
+
+    private val ignoreEvaluation = object: Any() {}
+    private val ignoreResult = object: Any() {}
+
+    @Test
+    fun testGenericsConverter() = runTest {
+        val payload = Json.MutableObject()
+        payload["str"] = "12.345"
+        payload["bn"] = true
+        payload["c"] = 'f'
+        payload["b"] = 0x31.toByte()
+        payload["s"] = 123.toShort()
+        payload["i"] = 123456
+        payload["l"] = 123456789L
+        payload["f"] = 123.456F
+        payload["d"] = 123.456789
+        payload["o"] = payload.toString()
+        payload["a"] = "[1, 2, 3]"
+        payload["t"] = "12:18:05"
+        payload["dt"] = "2022-04-08"
+        payload["dtm"] = "2022-04-08T12:18:05"
+        payload["n"] = null
+
+        val expected = mutableMapOf<String, Array<Any?>>()
+        expected["str"] = arrayOf("12.345", JsonException::class, JsonException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, 12.345f, 12.345, ClassCastException::class, ClassCastException::class, IllegalArgumentException::class, IllegalArgumentException::class, IllegalArgumentException::class, NumberFormatException::class, BigDecimal.fromDouble(12.345), null)
+        expected["bn"] = arrayOf("true", true, 't', 1.toByte(), 1.toShort(), 1, 1L, JsonException::class, JsonException::class, ClassCastException::class, ClassCastException::class, JsonException::class, JsonException::class, JsonException::class, BigInteger.fromInt(1), JsonException::class, null)
+        expected["c"] = arrayOf("f", false, 'f', JsonException::class, JsonException::class, JsonException::class, JsonException::class, JsonException::class, JsonException::class, ClassCastException::class, ClassCastException::class, JsonException::class, JsonException::class, JsonException::class, JsonException::class, JsonException::class, null)
+        expected["b"] = arrayOf("49", true, JsonException::class, 49.toByte(), 49.toShort(), 49, 49L, 49.0F, 49.0, ClassCastException::class, ClassCastException::class, JsonException::class, JsonException::class, JsonException::class, BigInteger.fromByte(0x31.toByte()), BigDecimal.fromByte(0x31.toByte()), null)
+        expected["s"] = arrayOf("123", true, JsonException::class, 123.toByte(), 123.toShort(), 123, 123L, 123F, 123.0, ClassCastException::class, ClassCastException::class, JsonException::class, JsonException::class, JsonException::class, BigInteger.fromShort(123.toShort()), BigDecimal.fromShort(123.toShort()), null)
+        expected["i"] = arrayOf("123456", true, JsonException::class, 64.toByte(), (-7616).toShort(), 123456, 123456L, 123456F, 123456.0, ClassCastException::class, ClassCastException::class, JsonException::class, JsonException::class, JsonException::class, BigInteger.fromInt(123456), BigDecimal.fromInt(123456), null)
+        expected["l"] = arrayOf("123456789", true, JsonException::class, 21.toByte(), (-13035).toShort(), 123456789, 123456789L, ignoreResult, 123456789.0, ClassCastException::class, ClassCastException::class, JsonException::class, JsonException::class, JsonException::class, BigInteger.fromLong(123456789L), BigDecimal.fromLong(123456789L), null)
+        expected["f"] = arrayOf("123.456", true, JsonException::class, 123.toByte(), 123.toShort(), 123, 123L, 123.456F, ignoreResult, ClassCastException::class, ClassCastException::class, JsonException::class, JsonException::class, JsonException::class, BigInteger.tryFromFloat(123.456F), ignoreResult, null)
+        expected["d"] = arrayOf("123.456789", true, JsonException::class, 123.toByte(), 123.toShort(), 123, 123L, ignoreResult, 123.456789, ClassCastException::class, ClassCastException::class, JsonException::class, JsonException::class, JsonException::class, BigInteger.fromInt(123), BigDecimal.fromDouble(123.456789), null)
+        expected["o"] = arrayOf("{\"str\":\"12.345\",\"bn\":true,\"c\":\"f\",\"b\":49,\"s\":123,\"i\":123456,\"l\":123456789,\"f\":123.456,\"d\":123.456789}", JsonException::class, JsonException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, ClassCastException::class, ClassCastException::class, IllegalArgumentException::class, IllegalArgumentException::class, IllegalArgumentException::class, ArithmeticException::class, ArithmeticException::class, null)
+        expected["a"] = arrayOf("[1, 2, 3]", JsonException::class, JsonException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, ClassCastException::class, ClassCastException::class, IllegalArgumentException::class, IllegalArgumentException::class, IllegalArgumentException::class, NumberFormatException::class, NumberFormatException::class, null)
+        expected["t"] = arrayOf("12:18:05", JsonException::class, JsonException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, ClassCastException::class, ClassCastException::class, LocalTime.parse("12:18:05"), IllegalArgumentException::class, IllegalArgumentException::class, NumberFormatException::class, NumberFormatException::class, null)
+        expected["dt"] = arrayOf("2022-04-08", JsonException::class, JsonException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, ClassCastException::class, ClassCastException::class, IllegalArgumentException::class, LocalDate.parse("2022-04-08"), IllegalArgumentException::class, NumberFormatException::class, NumberFormatException::class, null)
+        expected["dtm"] = arrayOf("2022-04-08T12:18:05", JsonException::class, JsonException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, NumberFormatException::class, ClassCastException::class, ClassCastException::class, IllegalArgumentException::class, IllegalArgumentException::class, LocalDateTime.parse("2022-04-08T12:18:05"), NumberFormatException::class, NumberFormatException::class, null)
+        expected["n"] = arrayOf(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)
+
+        for (key in expected.keys) {
+            val exp = expected[key] ?: throw Error("missing expected values array")
+            if (exp.size != 17) throw Error("wrong length for expected values array for key $key: ${exp.size}")
+            // logger.warn { "conversion test on key $key: value = ${payload[key]},  expected = [ ${exp.joinToString(", ")} ]"}
+            var index = 0
+            expect(exp[index++]) { payload.getAs<String>(key) }
+            expect(exp[index++]) { payload.getAs<Boolean>(key) }
+            expect(exp[index++]) { payload.getAs<Char>(key) }
+            expect(exp[index++]) { payload.getAs<Byte>(key) }
+            expect(exp[index++]) { payload.getAs<Short>(key) }
+            expect(exp[index++]) { payload.getAs<Int>(key) }
+            expect(exp[index++]) { payload.getAs<Long>(key) }
+            expect(exp[index++]) { payload.getAs<Float>(key) }
+            expect(exp[index++]) { payload.getAs<Double>(key) }
+            expect(exp[index++]) { payload.getAs<Json.Object>(key) }
+            expect(exp[index++]) { payload.getAs<Json.Array>(key) }
+            expect(exp[index++]) { payload.getAs<LocalTime>(key) }
+            expect(exp[index++]) { payload.getAs<LocalDate>(key) }
+            expect(exp[index++]) { payload.getAs<LocalDateTime>(key) }
+            expect(exp[index++]) { payload.getAs<BigInteger>(key) }
+            expect(exp[index++]) { payload.getAs<BigDecimal>(key) }
+            expect(exp[index++]) { null }
+        }
     }
 }

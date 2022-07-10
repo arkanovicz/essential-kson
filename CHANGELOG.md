@@ -1,3 +1,10 @@
+# V2.1
+
++ new: Array.toJson(index) and Object.toJson(key) (along with toObject() and toArray() methods) try to convert the value to Json.
++ new :inline reified accessors Array.getAs<T>(index) and Object.getAs<T>(key)
++ new: getLocalTime() accessors
++ bump dependencies and kotlin version
+
 # V2.0.1
 
 + fix: dependency to ionspin bignum library should be as an api
