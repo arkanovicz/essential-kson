@@ -69,6 +69,37 @@ Containers `toString()` and `toString(stream)` methods will render JSON strings 
 
 The reentrant method `Json.toJson(Any)` will try hard to convert any standard container to a JSON structure.
 
+## Ktor content negociation integration
+
+Use the following code to use essential-kson with ktor content negotiation:
+
+```kotlin
+
+object KsonConverter: ContentConverter {
+    override suspend fun deserialize(charset: Charset, typeInfo: TypeInfo, content: ByteReadChannel): Any? {
+        val input = object: Json.Input {
+            val reader = content.toInputStream().reader(charset)
+            override fun read() = reader.read().toChar()
+        }
+        return Json.parseValue(input)
+    }
+    override suspend fun serialize(
+        contentType: ContentType,
+        charset: Charset,
+        typeInfo: TypeInfo,
+        value: Any
+    ): OutgoingContent? = TextContent(value.toString(), contentType.withCharsetIfNeeded(charset))
+}
+
+// and in ktor configuration section:
+
+    install(ContentNegotiation) {
+        register(ContentType.Application.Json, KsonConverter)
+    }
+
+
+```
+
 ## References
 
 + [RFC 7159](https://tools.ietf.org/html/rfc7159)
