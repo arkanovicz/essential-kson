@@ -72,9 +72,13 @@ The reentrant method `Json.toJson(Any)` will try hard to convert any standard co
 
 ## Ktor content negociation integration
 
-Use the following code to use essential-kson with ktor content negotiation:
+### Ktor v1.x
+
+Use the following code to use essential-kson with ktor 1.x content negotiation:
 
 ```kotlin
+
+import com.republicate.kson.Json
 
 object KsonConverter: ContentConverter {
     override suspend fun deserialize(charset: Charset, typeInfo: TypeInfo, content: ByteReadChannel): Any? {
@@ -96,6 +100,53 @@ object KsonConverter: ContentConverter {
 
     install(ContentNegotiation) {
         register(ContentType.Application.Json, KsonConverter)
+    }
+
+
+```
+
+### Ktor v2.x
+
+Use the following code to use essential-kson with ktor 2.x content negotiation:
+
+```kotlin
+
+import com.republicate.kson.Json
+
+object KsonConverter: ContentConverter {
+    override suspend fun deserialize(charset: Charset, typeInfo: TypeInfo, content: ByteReadChannel): Any? {
+        val buffer = StringBuilder()
+        var first = true
+        while (true) {
+            if (first) first = false
+            else buffer.append('\n')
+            if (!content.readUTF8LineTo(buffer)) break
+        }
+        return Json.parseValue(buffer.toString())
+    }
+
+    override suspend fun serializeNullable(
+        contentType: ContentType,
+        charset: Charset,
+        typeInfo: TypeInfo,
+        value: Any?
+    ): OutgoingContent? {
+        if (value !is Json) throw IOException("content is not Json")
+        return TextContent(value.toString(), ContentType.Application.Json)
+    }
+}
+
+fun ContentNegotiationConfig.kson() {
+    register(
+        contentType = ContentType.Application.Json,
+        converter = KsonConverter)
+}
+
+
+// and in ktor configuration section:
+
+    install(ContentNegotiation) {
+        kson()
     }
 
 
