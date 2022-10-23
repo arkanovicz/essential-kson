@@ -111,7 +111,7 @@ publishing {
         pom {
             name.set("essential-kson")
             description.set("essential-kson $version - Lightweight JSON library for Kotlin")
-            url.set("https://gitlab.renegat.net/claude/essential-kson")
+            url.set("https://gitlab.republicate.com/claude/essential-kson")
             licenses {
                 license {
                     name.set("The Apache Software License, Version 2.0")
@@ -127,9 +127,8 @@ publishing {
                 }
             }
             scm {
-                connection.set("scm:git@gitlab.renegat.net:claude/essential-kson.git")
-                developerConnection.set("scm:git:ssh://github.com:MicroUtils/kotlin-logging.git")
-                url.set("https://gitlab.renegat.net/claude/essential-kson")
+                connection.set("scm:git@gitlab.republicate.com:claude/essential-kson.git")
+                url.set("https://gitlab.republicate.com/claude/essential-kson")
             }
         }
         artifact(tasks["dokkaJar"])
