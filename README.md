@@ -8,10 +8,11 @@ Essential-kson is a JSON library which:
 - doesn't use any reflection, validation, nor schema, or custom POJO field/class support
 - is fully multiplatform
 - doesn't wrap raw values (only object and array containers inherit the Json class)
-- exposes Json container obects as open classes
+- distinguish between mutable and immutable Json containers
+- exposes Json container obects as extensible open classes
 - provides a nice API with specialized getters and setters
 
-The current multiplatform targets are jvm, js(IR) and linux/mingwx64 native. The OSX target could easity be added.
+The current multiplatform targets are jvm, js(IR) and linux/mingwx64 native. Other targets could easily be added.
 
 ## Usage
 

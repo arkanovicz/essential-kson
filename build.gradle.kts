@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform") version "1.7.10"
+    kotlin("multiplatform") version "1.7.20"
     id("org.jetbrains.dokka") version "1.7.0"
     `maven-publish`
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.republicate.kson"
-version = "2.1"
+version = "2.2"
 
 repositories {
     mavenCentral()
@@ -57,20 +57,19 @@ kotlin {
          else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
      }
 
-
     sourceSets {
         val commonMain by getting {
             dependencies {
                 api("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
-                api("com.ionspin.kotlin:bignum:0.3.6")
-                implementation("io.github.microutils:kotlin-logging:2.1.23")
+                api("com.ionspin.kotlin:bignum:0.3.7")
+                implementation("io.github.microutils:kotlin-logging:3.0.2")
             }
         }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
                 implementation("io.ktor:ktor-client-core:1.6.8")
             }
         }
