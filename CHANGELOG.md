@@ -1,4 +1,9 @@
-# V2.1
+# v2.2
+
++ bump dependencies and kotlin version
++ review readme file
+
+# v2.1
 
 + new: Array.toJson(index) and Object.toJson(key) (along with toObject() and toArray() methods) try to convert the value to Json.
 + new :inline reified accessors Array.getAs<T>(index) and Object.getAs<T>(key)
@@ -6,7 +11,7 @@
 + bump dependencies and kotlin version
 + conversions are a little more strict
 
-# V2.0.1
+# v2.0.1
 
 + fix: dependency to ionspin bignum library should be as an api
 
