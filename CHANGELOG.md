@@ -1,3 +1,7 @@
+# v2.3
+
++ new: added Array.toBytes(index) and Object.toBytes(key) 
+
 # v2.2
 
 + bump dependencies and kotlin version

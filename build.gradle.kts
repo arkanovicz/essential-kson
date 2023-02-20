@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform") version "1.7.20"
+    kotlin("multiplatform") version "1.7.21"
     id("org.jetbrains.dokka") version "1.7.0"
     `maven-publish`
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.republicate.kson"
-version = "2.2"
+version = "2.3"
 
 repositories {
     mavenCentral()

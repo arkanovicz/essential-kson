@@ -521,6 +521,14 @@ interface Json {
         fun getJson(index: Int) = get(index) as Json?
 
         /**
+         * Returns the element at the specified position as an array of bytes.
+         * @param  index index of the element to return
+         * @return the element at the specified position as a ByteArray value
+         * @throws ClassCastException if value cannot be retrieved as a ByteArray.
+         */
+        fun getBytes(index: Int) = TypeUtils.toBytes(get(index))
+
+        /**
          * Returns the element the specified key as a reified type instance. Since this method
          * needs a <code>when</code> clause to return the result, it does have a performance cost
          * because of the branching.
@@ -548,6 +556,7 @@ interface Json {
                 Array::class -> getArray(index)
                 Object::class -> getObject(index)
                 Json::class -> getJson(index)
+                ByteArray::class -> getBytes(index)
                 else -> get(index) as T?
             } as T?
         }
@@ -866,6 +875,15 @@ interface Json {
          * @return the element at the specified position as a Json.Object value
          */
         fun getJson(key: String) = toJson(get(key))
+
+        /**
+         * Returns the element at the specified position as an array of bytes.
+         * @param  index index of the element to return
+         * @return the element at the specified position as a ByteArray value
+         * @throws ClassCastException if value cannot be retrieved as a ByteArray.
+         */
+        fun getBytes(key: String) = TypeUtils.toBytes(get(key))
+
 
         /**
          * Returns the element the specified key as a reified type instance. Since this method
@@ -1549,9 +1567,12 @@ interface Json {
             }
 
         fun toBytes(value: Any?): ByteArray? {
-            return if (value == null || value is ByteArray) {
-                value as ByteArray?
-            } else value.toString().encodeToByteArray()
+            return when (value) {
+                null -> null
+                is ByteArray -> value
+                is String -> value.encodeToByteArray()
+                else -> throw JsonException("cannot convert this value to byte array")
+            }
         }
     }
 }
