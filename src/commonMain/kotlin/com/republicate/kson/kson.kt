@@ -278,7 +278,7 @@ interface Json {
         fun toJsonOrIntegral(obj: Any?): Any? =
                 when (obj) {
                     null -> null
-                    is Number, Boolean, String -> obj
+                    is Number, is Boolean, is String -> obj
                     is Json-> obj
                     is Map<*, *> -> obj.entries.map { it.key.toString() to toJsonOrIntegral(it.value) }.toMap(MutableObject())
                     is Collection<*> -> obj.mapTo(MutableArray()) { toJsonOrIntegral(it) }
@@ -1583,3 +1583,5 @@ fun <T> List<T>.toJsonArray() = Json.toJson(this) as Json.Array
 fun <T> List<T>.toMutableJsonArray() = Json.toJson(this) as Json.MutableArray
 fun <K, V> Map<K, V>.toJsonObject() = Json.toJson(this) as Json.Object
 fun <K, V> Map<K, V>.toMutableJsonObject() = Json.toJson(this) as Json.MutableObject
+fun <K, V> Iterable<Pair<K, V>>.toJsonObject() = map { Pair(it.first.toString(), Json.toJsonOrIntegral(it.second)) }.toMap(Json.MutableObject()) as Json.Object
+fun <K, V> Iterable<Pair<K, V>>.toMutableJsonObject() = map { Pair(it.first.toString(), Json.toJsonOrIntegral(it.second)) }.toMap(Json.MutableObject()) as Json.MutableObject
