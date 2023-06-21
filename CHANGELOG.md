@@ -1,3 +1,8 @@
+# v2.4
+
++ fix: fixed Json.toJson() method for numbers and booleans wrongly converted to string
++ new: toJsonObject() and toMutableJsonObject() for pairs iterables
+
 # v2.3
 
 + new: added Array.toBytes(index) and Object.toBytes(key) 
