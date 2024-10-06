@@ -1,9 +1,10 @@
 plugins {
-    kotlin("multiplatform") version "1.7.21"
+    kotlin("multiplatform") version "1.8.22"
     id("org.jetbrains.dokka") version "1.7.0"
     `maven-publish`
     id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
     signing
+    id("com.github.ben-manes.versions") version "0.51.0"
 }
 
 group = "com.republicate.kson"
@@ -25,8 +26,8 @@ kotlin {
             // kotlin compiler compatibility options
             kotlinOptions {
                 jvmTarget = "1.8"
-                apiVersion = "1.7"
-                languageVersion = "1.7"
+                apiVersion = "1.8"
+                languageVersion = "1.8"
             }
         }
     }
@@ -37,7 +38,9 @@ kotlin {
                      useDebuggableChrome()
                     //useChromeHeadless()
                     //useFirefox()
-                    webpackConfig.cssSupport.enabled = true
+                    webpackConfig.cssSupport {
+                        enabled.set(true)
+                    }
                 }
             }
         }
