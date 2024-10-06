@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform") version "1.9.25"
-    id("org.jetbrains.dokka") version "1.7.0"
+    id("org.jetbrains.dokka") version "1.9.20"
     `maven-publish`
     id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
     signing
@@ -31,16 +31,17 @@ kotlin {
             }
         }
     }
-    js(IR) {
+    js {
         browser {
             testTask {
                 useKarma {
-                     useDebuggableChrome()
-                    //useChromeHeadless()
+                    //useDebuggableChrome()
+                    useChromeHeadless()
                     //useFirefox()
+                    /*
                     webpackConfig.cssSupport {
                         enabled.set(true)
-                    }
+                    }*/
                 }
             }
         }
@@ -63,16 +64,17 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
-                api("com.ionspin.kotlin:bignum:0.3.7")
-                implementation("io.github.microutils:kotlin-logging:3.0.2")
+                api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+                api("com.ionspin.kotlin:bignum:0.3.10")
+                implementation("io.github.oshai:kotlin-logging:7.0.0")
             }
         }
         val commonTest by getting {
             dependencies {
+                //implementation(kotlin("test"))
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
                 implementation("io.ktor:ktor-client-core:1.6.8")
             }
         }
@@ -80,7 +82,7 @@ kotlin {
         val jvmTest by getting {
             dependencies {
                 implementation(kotlin("test-junit"))
-                runtimeOnly("org.slf4j:slf4j-simple:1.7.32")
+                runtimeOnly("org.slf4j:slf4j-simple:2.0.16")
             }
         }
         val jsMain by getting
@@ -90,6 +92,14 @@ kotlin {
             }
         }
         val nativeMain by getting
+    }
+
+    targets.configureEach {
+        compilations.configureEach {
+            compileTaskProvider.get().compilerOptions {
+                freeCompilerArgs.add("-Xexpect-actual-classes")
+            }
+        }
     }
 }
 

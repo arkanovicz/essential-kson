@@ -1,6 +1,7 @@
 package com.republicate.kson
 
 import kotlinx.cinterop.ByteVar
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.toKString
@@ -10,14 +11,17 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
-import mu.KotlinLoggingConfiguration
-import mu.KotlinLoggingLevel
+import io.github.oshai.kotlinlogging.KotlinLoggingConfiguration
+// import io.github.oshai.kotlinlogging.KotlinLoggingLevel
 import platform.posix.fclose
 import platform.posix.fgets
 import platform.posix.fopen
 
+actual suspend fun getResource(path: String) = getResourceImpl(path)
+
 // see https://www.nequalsonelifestyle.com/2020/11/16/kotlin-native-file-io/
-actual suspend fun getResource(path: String): String {
+@OptIn(ExperimentalForeignApi::class)
+fun getResourceImpl(path: String): String {
     val returnBuffer = StringBuilder()
     // for now, fetch resources from src dirs - TODO
     val file = fopen("src/commonTest/resources/$path", "r") ?: throw IllegalArgumentException("Cannot open input file $path")

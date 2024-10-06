@@ -23,7 +23,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.Instant
 import kotlin.math.max
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 import com.ionspin.kotlin.bignum.integer.BigInteger
@@ -1253,7 +1253,7 @@ interface Json {
                             if (builder == null) {
                                 builder = StringBuilder(max(2 * pos, 16))
                             }
-                            builder.append(buffer, 0, pos - 1)
+                            builder.appendRange(buffer, 0, pos - 1)
                             pos = 0
                             var c = parseEscapeSequence()
                             builder.append(c)
