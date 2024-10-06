@@ -1584,4 +1584,4 @@ fun <T> List<T>.toMutableJsonArray() = Json.toJson(this) as Json.MutableArray
 fun <K, V> Map<K, V>.toJsonObject() = Json.toJson(this) as Json.Object
 fun <K, V> Map<K, V>.toMutableJsonObject() = Json.toJson(this) as Json.MutableObject
 fun <K, V> Iterable<Pair<K, V>>.toJsonObject() = map { Pair(it.first.toString(), Json.toJsonOrIntegral(it.second)) }.toMap(Json.MutableObject()) as Json.Object
-fun <K, V> Iterable<Pair<K, V>>.toMutableJsonObject() = map { Pair(it.first.toString(), Json.toJsonOrIntegral(it.second)) }.toMap(Json.MutableObject()) as Json.MutableObject
+fun <K, V> Iterable<Pair<K, V>>.toMutableJsonObject() = map { Pair(it.first.toString(), Json.toJsonOrIntegral(it.second)) }.toMap(Json.MutableObject())

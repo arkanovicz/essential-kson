@@ -40,7 +40,7 @@ actual suspend fun getResource(path: String): String {
 }
 
 actual fun runTest(body: suspend CoroutineScope.() -> Unit) = runBlocking {
-    KotlinLoggingConfiguration.logLevel = KotlinLoggingLevel.DEBUG
+    // KotlinLoggingConfiguration.logLevel = KotlinLoggingLevel.DEBUG
     body()
 }
 
