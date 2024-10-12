@@ -4,14 +4,16 @@
 
 Essential-kson is a JSON library which:
 
+- is fully multiplatform
+- is robust and performant
 - is *minimalistic*: only one source file
 - doesn't use any reflection, validation, nor schema, or custom POJO field/class support
-- is fully multiplatform
 - doesn't wrap raw values (only object and array containers inherit the Json class)
-- distinguish between mutable and immutable Json containers
-- exposes Json container obects as extensible open classes
+- distinguishes between mutable and immutable Json containers
+- exposes Json container objects as extensible open classes
 - provides a nice API with specialized getters and setters
 
+[TOTO - update]
 The current multiplatform targets are jvm, js(IR) and linux/mingwx64 native. Other targets could easily be added.
 
 ## Usage
@@ -27,12 +29,12 @@ Using Maven:
     <dependency>
         <groupId>com.republicate</groupId>
         <artifactId>essential-kson</artifactId>
-        <version>2.2</version>
+        <version>2.5</version>
     </dependency>
 
 Using Gradle:
 
-    implementation 'com.republicate:essential-kson:2.2'
+    implementation 'com.republicate:essential-kson:2.5'
 
 ### Parsing JSON
 
@@ -66,11 +68,13 @@ Containers `toString()` and `toString(stream)` methods will render JSON strings 
     // rendering towards a stream
     container.toString(stream);
 
+`toPrettyString()` methods will pretty-print the output.
+
 ### Converting to JSON
 
 The reentrant method `Json.toJson(Any)` will try hard to convert any standard container to a JSON structure.
 
-## Ktor content negociation integration
+## Ktor content negotiation integration
 
 ### Ktor v1.x
 

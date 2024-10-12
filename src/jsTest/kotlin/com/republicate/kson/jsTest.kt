@@ -2,7 +2,9 @@ package com.republicate.kson
 
 
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.request.*
+import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.async
@@ -12,15 +14,14 @@ import kotlinx.coroutines.GlobalScope
 
 val client = HttpClient()
 
-actual suspend fun getResource(path: String) = getResourceSImpl(path)
+actual suspend fun getResource(path: String) = getResourceImpl(path)
 
 
 @OptIn(DelicateCoroutinesApi::class)
-suspend fun getResourceSImpl(path: String): String {
-    val content = GlobalScope.async {
-        client.get<String> { url(path) }
-    }
-    return content.await()
+suspend fun getResourceImpl(path: String): String {
+    return GlobalScope.async {
+        client.get(path).body<String>()
+    }.await()
 }
 
 actual fun runTest(body: suspend CoroutineScope.() -> Unit) {

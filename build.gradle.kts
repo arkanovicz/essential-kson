@@ -1,8 +1,14 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+
 plugins {
-    kotlin("multiplatform") version "1.9.25"
-    id("org.jetbrains.dokka") version "1.9.20"
+    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.dokka)
     `maven-publish`
-    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
+    alias(libs.plugins.nexusPublish)
     signing
     id("com.github.ben-manes.versions") version "0.51.0"
 }
@@ -10,34 +16,29 @@ plugins {
 group = "com.republicate.kson"
 version = "2.4"
 
-repositories {
-    mavenCentral()
-}
-
+/*
 apply(plugin = "io.github.gradle-nexus.publish-plugin")
 apply(plugin = "maven-publish")
 apply(plugin = "signing")
+*/
 
 kotlin {
 
-    // explicitApi()
-    jvm {
-        compilations.all {
-            // kotlin compiler compatibility options
-            kotlinOptions {
-                jvmTarget = "1.8"
-                apiVersion = "1.9"
-                languageVersion = "1.9"
-            }
-        }
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    compilerOptions {
+        apiVersion.set(KotlinVersion.KOTLIN_2_0)
+        JvmPlatforms.jvmPlatformByTargetVersion(JvmTarget.JVM_11)
     }
+
+    // explicitApi()
+    jvm()
     js {
         browser {
             testTask {
                 useKarma {
                     //useDebuggableChrome()
                     useChromeHeadless()
-                    //useFirefox()
+                    // useFirefox()
                     /*
                     webpackConfig.cssSupport {
                         enabled.set(true)
@@ -45,53 +46,84 @@ kotlin {
                 }
             }
         }
-        nodejs {
-            testTask {
-
-            }
-        }
+        nodejs()
     }
 
-     val hostOs = System.getProperty("os.name")
-     val isMingwX64 = hostOs.startsWith("Windows")
-     val nativeTarget = when {
-//         hostOs == "Mac OS X" -> macosX64("native") TODO
-         hostOs == "Linux" -> linuxX64("native")
-         isMingwX64 -> mingwX64("native")
-         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
-     }
-
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+    linuxX64()
+    linuxArm64()
+    // androidNativeX64()
+    // androidNativeX86()
+    // androidNativeArm32()
+    // androidNativeArm64()
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+    macosX64()
+    macosArm64()
+    tvosArm64()
+    tvosSimulatorArm64()
+    tvosX64()
+    // watchosArm32()
+    watchosArm64()
+    watchosDeviceArm64()
+    watchosX64()
+    watchosSimulatorArm64()
+    mingwX64()
+    /* waiting for kotlinx-datetime 0.6.2 and ktor 3.0.0
+    wasmJs {
+        browser()
+    }
+    wasmWasi()
+    */
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
-                api("com.ionspin.kotlin:bignum:0.3.10")
-                implementation("io.github.oshai:kotlin-logging:7.0.0")
+                api(libs.kotlinx.datetime)
+                api(libs.bignum)
+                implementation(libs.kotlin.logging)
             }
         }
         val commonTest by getting {
             dependencies {
                 //implementation(kotlin("test"))
-                implementation(kotlin("test-common"))
-                implementation(kotlin("test-annotations-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
-                implementation("io.ktor:ktor-client-core:1.6.8")
+                implementation(libs.kotlin.test)
+                // implementation(kotlin("test-common"))
+                // implementation(kotlin("test-annotations-common"))
+                implementation(libs.kotlinx.coroutines)
+                implementation(libs.ktor)
             }
         }
         val jvmMain by getting
         val jvmTest by getting {
             dependencies {
                 implementation(kotlin("test-junit"))
-                runtimeOnly("org.slf4j:slf4j-simple:2.0.16")
+                runtimeOnly(libs.slf4j)
             }
         }
         val jsMain by getting
         val jsTest by getting {
             dependencies {
-                implementation(kotlin("test-js"))
+                implementation(libs.ktor)
             }
         }
-        val nativeMain by getting
+        /*
+        val wasmJsTest by getting {
+            dependencies {
+                //implementation(kotlin(Deps.WasmJs.test))
+                //implementation(libs.kotlin.test.js)
+            }
+        }
+         */
+
+        all {
+            // languageSettings.enableLanguageFeature("InlineClasses")
+            languageSettings.optIn("expect-actual-classes")
+            // languageSettings.optIn("kotlin.ExperimentalUnsignedTypes")
+            languageSettings.optIn("kotlin.ExperimentalStdlibApi")
+        }
     }
 
     targets.configureEach {
@@ -103,15 +135,25 @@ kotlin {
     }
 }
 
+android {
+    namespace = "org.jetbrains.kotlinx.multiplatform.library.template"
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    defaultConfig {
+        minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+}
+
 tasks {
     register<Jar>("dokkaJar") {
         from(dokkaHtml)
         dependsOn(dokkaHtml)
         archiveClassifier.set("javadoc")
     }
+    /*
     named("kotlinNpmInstall").configure {
         onlyIf { false }
     }
+    */
 }
 
 signing {
