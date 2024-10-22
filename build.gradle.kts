@@ -1,10 +1,12 @@
+import org.gradle.kotlin.dsl.support.kotlinCompilerOptions
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
 plugins {
-    alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.dokka)
     `maven-publish`
@@ -14,20 +16,18 @@ plugins {
 }
 
 group = "com.republicate.kson"
-version = "2.4"
-
-/*
-apply(plugin = "io.github.gradle-nexus.publish-plugin")
-apply(plugin = "maven-publish")
-apply(plugin = "signing")
-*/
+version = "2.5"
 
 kotlin {
+
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     compilerOptions {
         apiVersion.set(KotlinVersion.KOTLIN_2_0)
-        JvmPlatforms.jvmPlatformByTargetVersion(JvmTarget.JVM_11)
+        JvmPlatforms.jvmPlatformByTargetVersion(JvmTarget.JVM_17)
     }
 
     // explicitApi()
@@ -48,16 +48,15 @@ kotlin {
         }
         nodejs()
     }
-
     iosX64()
     iosArm64()
     iosSimulatorArm64()
     linuxX64()
     linuxArm64()
-    // androidNativeX64()
-    // androidNativeX86()
-    // androidNativeArm32()
-    // androidNativeArm64()
+    androidNativeX64()
+    androidNativeX86()
+    androidNativeArm32()
+    androidNativeArm64()
     iosX64()
     iosArm64()
     iosSimulatorArm64()
@@ -68,7 +67,7 @@ kotlin {
     tvosX64()
     // watchosArm32()
     watchosArm64()
-    watchosDeviceArm64()
+    // watchosDeviceArm64()
     watchosX64()
     watchosSimulatorArm64()
     mingwX64()
@@ -93,7 +92,7 @@ kotlin {
                 // implementation(kotlin("test-common"))
                 // implementation(kotlin("test-annotations-common"))
                 implementation(libs.kotlinx.coroutines)
-                implementation(libs.ktor)
+                // implementation(libs.ktor)
             }
         }
         val jvmMain by getting
@@ -117,7 +116,6 @@ kotlin {
             }
         }
          */
-
         all {
             // languageSettings.enableLanguageFeature("InlineClasses")
             languageSettings.optIn("expect-actual-classes")
@@ -132,14 +130,6 @@ kotlin {
                 freeCompilerArgs.add("-Xexpect-actual-classes")
             }
         }
-    }
-}
-
-android {
-    namespace = "org.jetbrains.kotlinx.multiplatform.library.template"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-    defaultConfig {
-        minSdk = libs.versions.android.minSdk.get().toInt()
     }
 }
 
