@@ -7,7 +7,7 @@ kotlinx-datetime="0.6.1"
 bignum = "0.3.10"
 kotlin-logging = "7.0.0"
 kotlinx-coroutines = "1.9.0"
-ktor = "2.3.12"
+ktor = "3.0.0"
 slf4j = "2.0.16"
 
 [libraries]

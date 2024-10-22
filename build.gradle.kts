@@ -1,10 +1,13 @@
+
 import org.gradle.kotlin.dsl.support.kotlinCompilerOptions
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -18,13 +21,22 @@ plugins {
 group = "com.republicate.kson"
 version = "2.5"
 
+@OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
+
+    applyDefaultHierarchyTemplate {
+        common {
+            group("commonJs") {
+                withJs()
+                withWasmJs()
+            }
+        }
+    }
 
     jvmToolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
     }
 
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
     compilerOptions {
         apiVersion.set(KotlinVersion.KOTLIN_2_0)
         JvmPlatforms.jvmPlatformByTargetVersion(JvmTarget.JVM_17)
@@ -71,12 +83,12 @@ kotlin {
     watchosX64()
     watchosSimulatorArm64()
     mingwX64()
-    /* waiting for kotlinx-datetime 0.6.2 and ktor 3.0.0
+    /* waiting for kotlinx-datetime 0.6.2 and ktor 3.0.0 */
+    @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
     }
-    wasmWasi()
-    */
+    // wasmWasi()
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -102,20 +114,16 @@ kotlin {
                 runtimeOnly(libs.slf4j)
             }
         }
-        val jsMain by getting
-        val jsTest by getting {
+        val commonJsMain by getting
+        val commonJsTest by getting {
             dependencies {
                 implementation(libs.ktor)
             }
         }
-        /*
-        val wasmJsTest by getting {
-            dependencies {
-                //implementation(kotlin(Deps.WasmJs.test))
-                //implementation(libs.kotlin.test.js)
-            }
-        }
-         */
+        val jsMain by getting
+        val jsTest by getting
+        val wasmJsMain by getting
+        val wasmJsTest by getting
         all {
             // languageSettings.enableLanguageFeature("InlineClasses")
             languageSettings.optIn("expect-actual-classes")
