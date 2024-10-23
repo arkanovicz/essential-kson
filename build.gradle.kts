@@ -48,8 +48,8 @@ kotlin {
         browser {
             testTask {
                 useKarma {
-                    //useDebuggableChrome()
-                    useChromeHeadless()
+                    useDebuggableChrome()
+                    //useChromeHeadless()
                     // useFirefox()
                     /*
                     webpackConfig.cssSupport {
@@ -104,6 +104,7 @@ kotlin {
                 // implementation(kotlin("test-common"))
                 // implementation(kotlin("test-annotations-common"))
                 implementation(libs.kotlinx.coroutines)
+                implementation(libs.kotlinx.coroutines.test)
                 // implementation(libs.ktor)
             }
         }

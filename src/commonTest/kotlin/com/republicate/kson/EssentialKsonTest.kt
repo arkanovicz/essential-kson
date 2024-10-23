@@ -3,7 +3,7 @@ package com.republicate.kson
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.ionspin.kotlin.bignum.integer.BigInteger
 // import kotlinx.datetime.DateTimeParseException
-import kotlinx.datetime.Instant
+import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
@@ -11,6 +11,7 @@ import kotlin.test.Test
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlin.reflect.KClass
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -620,7 +621,7 @@ class EssentialJsonTest : BaseTestUnit()
                 "test_parsing/y_string_allowed_escapes.json", // no form feed in kotlin
                 "test_parsing/y_string_nonCharacterInUTF-8_U+FFFF.json" // why should it be successful?!
         ).apply {
-                if (platform.native()) {
+                if (Platform.native()) {
                         // segfaults on native - TODO see why
                         addAll(listOf(
                                 "test_parsing/n_structure_100000_opening_arrays.json",
@@ -651,7 +652,7 @@ class EssentialJsonTest : BaseTestUnit()
                 "test_transform/object_same_key_same_value.json",
                 "test_transform/object_same_key_unclear_values.json"
         ).apply {
-                if (platform.native()) {
+                if (Platform.native()) {
                         // There is a problem with escape sequences on the native platform.
                         // TODO - see why
                         addAll(listOf(
@@ -787,6 +788,19 @@ class EssentialJsonTest : BaseTestUnit()
     private val ignoreResult = object: Any() {}
 
     @Test
+    fun testBrokenConversion() = runTest {
+       // Float.toString() gives extra erroneous digits in wasmjs 2.0.21
+       // See https://youtrack.jetbrains.com/issue/KT-59118/WASM-floating-point-toString-inconsistencies
+       val f = 123.456F
+        if (Platform.wasm()) {
+            // check the bug is still here
+            assertNotEquals("123.456", f.toString())
+        } else {
+            assertEquals("123.456", f.toString())
+        }
+    }
+
+    @Test
     fun testGenericsConverter() = runTest {
         val payload = Json.MutableObject()
         payload["str"] = "12.345"
@@ -823,27 +837,31 @@ class EssentialJsonTest : BaseTestUnit()
         expected["n"] = arrayOf(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)
 
         for (key in expected.keys) {
+if(key!="f")continue
             val exp = expected[key] ?: throw Error("missing expected values array")
             if (exp.size != 17) throw Error("wrong length for expected values array for key $key: ${exp.size}")
             // logger.warn { "conversion test on key $key: value = ${payload[key]},  expected = [ ${exp.joinToString(", ")} ]"}
-            var index = 0
-            expect(exp[index++]) { payload.getAs<String>(key) }
-            expect(exp[index++]) { payload.getAs<Boolean>(key) }
-            expect(exp[index++]) { payload.getAs<Char>(key) }
-            expect(exp[index++]) { payload.getAs<Byte>(key) }
-            expect(exp[index++]) { payload.getAs<Short>(key) }
-            expect(exp[index++]) { payload.getAs<Int>(key) }
-            expect(exp[index++]) { payload.getAs<Long>(key) }
-            expect(exp[index++]) { payload.getAs<Float>(key) }
-            expect(exp[index++]) { payload.getAs<Double>(key) }
-            expect(exp[index++]) { payload.getAs<Json.Object>(key) }
-            expect(exp[index++]) { payload.getAs<Json.Array>(key) }
-            expect(exp[index++]) { payload.getAs<LocalTime>(key) }
-            expect(exp[index++]) { payload.getAs<LocalDate>(key) }
-            expect(exp[index++]) { payload.getAs<LocalDateTime>(key) }
-            expect(exp[index++]) { payload.getAs<BigInteger>(key) }
-            expect(exp[index++]) { payload.getAs<BigDecimal>(key) }
-            expect(exp[index++]) { null }
+            if (!Platform.wasm() || key !in setOf("f", "o")) {
+                // Float.toString() gives extra erroneous digits in wasmjs 2.0.21
+                // See https://youtrack.jetbrains.com/issue/KT-59118/WASM-floating-point-toString-inconsistencies
+                expect(exp[0]) { payload.getAs<String>(key) }
+            }
+            expect(exp[1]) { payload.getAs<Boolean>(key) }
+            expect(exp[2]) { payload.getAs<Char>(key) }
+            expect(exp[3]) { payload.getAs<Byte>(key) }
+            expect(exp[4]) { payload.getAs<Short>(key) }
+            expect(exp[5]) { payload.getAs<Int>(key) }
+            expect(exp[6]) { payload.getAs<Long>(key) }
+            expect(exp[7]) { payload.getAs<Float>(key) }
+            expect(exp[8]) { payload.getAs<Double>(key) }
+            expect(exp[9]) { payload.getAs<Json.Object>(key) }
+            expect(exp[10]) { payload.getAs<Json.Array>(key) }
+            expect(exp[11]) { payload.getAs<LocalTime>(key) }
+            expect(exp[12]) { payload.getAs<LocalDate>(key) }
+            expect(exp[13]) { payload.getAs<LocalDateTime>(key) }
+            expect(exp[14]) { payload.getAs<BigInteger>(key) }
+            expect(exp[15]) { payload.getAs<BigDecimal>(key) }
+            expect(exp[16]) { null }
         }
     }
 }

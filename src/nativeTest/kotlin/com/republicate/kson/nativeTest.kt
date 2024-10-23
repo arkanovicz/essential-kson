@@ -43,13 +43,9 @@ fun getResourceImpl(path: String): String {
     return returnBuffer.toString()
 }
 
-actual fun runTest(body: suspend CoroutineScope.() -> Unit) = runBlocking {
-    // KotlinLoggingConfiguration.logLevel = KotlinLoggingLevel.DEBUG
-    body()
-}
-
-actual object platform {
+actual object Platform {
     actual fun js() = false
     actual fun jvm() = false
     actual fun native() = true
+    actual fun wasm() = false
 }

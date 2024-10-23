@@ -24,16 +24,9 @@ suspend fun getResourceImpl(path: String): String {
     }.await()
 }
 
-actual fun runTest(body: suspend CoroutineScope.() -> Unit) {
-    runTestImpl(body)
-}
-
-@OptIn(DelicateCoroutinesApi::class)
-fun runTestImpl(body: suspend CoroutineScope.() -> Unit): dynamic =
-    GlobalScope.promise { body() }
-
-actual object platform {
+actual object Platform {
     actual fun js() = true
     actual fun jvm() = false
     actual fun native() = false
+    actual fun wasm() = false
 }

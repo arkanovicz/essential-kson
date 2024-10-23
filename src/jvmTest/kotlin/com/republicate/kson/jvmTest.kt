@@ -5,10 +5,9 @@ import kotlinx.coroutines.runBlocking
 
 actual suspend fun getResource(path: String) = {}.javaClass.classLoader.getResource(path).readText()
 
-actual fun runTest(body: suspend CoroutineScope.() -> Unit) = runBlocking { body() }
-
-actual object platform {
+actual object Platform {
     actual fun js() = false
     actual fun jvm() = true
     actual fun native() = false
+    actual fun wasm() = false
 }
