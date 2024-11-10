@@ -1,5 +1,6 @@
 
 import org.gradle.kotlin.dsl.support.kotlinCompilerOptions
+import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
@@ -148,11 +149,9 @@ tasks {
         dependsOn(dokkaHtml)
         archiveClassifier.set("javadoc")
     }
-    /*
-    named("kotlinNpmInstall").configure {
-        onlyIf { false }
+    withType<DokkaTask>().configureEach {
+        notCompatibleWithConfigurationCache("https://github.com/Kotlin/dokka/issues/2231")
     }
-    */
 }
 
 signing {
@@ -193,6 +192,104 @@ nexusPublishing {
     repositories {
         sonatype {
             useStaging.set(true)
+        }
+    }
+}
+
+/*
+// work around https://youtrack.jetbrains.com/issue/KT-61313
+tasks.withType<Sign>().configureEach {
+    val pubName = name.removePrefix("sign").removeSuffix("Publication")
+
+    // These tasks only exist for native targets, hence findByName() to avoid trying to find them for other targets
+
+    // Task ':linkDebugTest<platform>' uses this output of task ':sign<platform>Publication' without declaring an explicit or implicit dependency
+    tasks.findByName("linkDebugTest$pubName")?.let {
+        mustRunAfter(it)
+    }
+    // Task ':compileTestKotlin<platform>' uses this output of task ':sign<platform>Publication' without declaring an explicit or implicit dependency
+    tasks.findByName("compileTestKotlin$pubName")?.let {
+        mustRunAfter(it)
+    }
+}
+
+
+tasks.withType<PublishToMavenLocal>() {
+    val pubName = name.removePrefix("publish").removeSuffix("ToMavenLocal")
+    tasks.findByName("sign$pubName")?.let {
+        dependsOn(it)
+    }
+}
+
+// Add another weird dependency between 32/64 bits
+tasks.findByName("publishAndroidNativeArm32PublicationToMavenLocal")?.apply {
+    tasks.findByName("signAndroidNativeArm64Publication")?.let {
+        dependsOn(it)
+    }
+}
+*/
+
+// Taken from bignum
+tasks.all {
+    if (System.getProperty("os.name") == "Linux") {
+        // Linux task dependecies
+
+        // @formatter:off
+        if (this.name.equals("signAndroidNativeArm32Publication")) { this.mustRunAfter("signAndroidNativeArm64Publication") }
+        if (this.name.equals("signAndroidNativeArm64Publication")) { this.mustRunAfter("signAndroidNativeX64Publication") }
+        if (this.name.equals("signAndroidNativeX64Publication")) { this.mustRunAfter("signAndroidNativeX86Publication") }
+        if (this.name.equals("signAndroidNativeX86Publication")) { this.mustRunAfter("signJsPublication") }
+        if (this.name.equals("signJsPublication")) { this.mustRunAfter("signJvmPublication") }
+        if (this.name.equals("signJvmPublication")) { this.mustRunAfter("signKotlinMultiplatformPublication") }
+        if (this.name.equals("signKotlinMultiplatformPublication")) { this.mustRunAfter("signLinuxArm64Publication") }
+        if (this.name.equals("signLinuxArm64Publication")) { this.mustRunAfter("signLinuxX64Publication") }
+        if (this.name.equals("signLinuxX64Publication")) { this.mustRunAfter("signWasmJsPublication") }
+        // if (this.name.equals("signWasmJsPublication")) { this.mustRunAfter("signWasmWasiPublication") }
+        // @formatter:on
+
+        if (this.name.startsWith("publish")) {
+            this.mustRunAfter("signAndroidNativeArm32Publication")
+            this.mustRunAfter("signAndroidNativeArm64Publication")
+            this.mustRunAfter("signAndroidNativeX64Publication")
+            this.mustRunAfter("signAndroidNativeX86Publication")
+            this.mustRunAfter("signJsPublication")
+            this.mustRunAfter("signJvmPublication")
+            this.mustRunAfter("signKotlinMultiplatformPublication")
+            this.mustRunAfter("signLinuxArm64Publication")
+            this.mustRunAfter("signLinuxX64Publication")
+            this.mustRunAfter("signWasmJsPublication")
+            this.mustRunAfter("signMingwX64Publication")
+            // this.mustRunAfter("signWasmWasiPublication")
+        }
+
+        if (this.name.startsWith("compileTest")) {
+            this.mustRunAfter("signAndroidNativeArm32Publication")
+            this.mustRunAfter("signAndroidNativeArm64Publication")
+            this.mustRunAfter("signAndroidNativeX64Publication")
+            this.mustRunAfter("signAndroidNativeX86Publication")
+            this.mustRunAfter("signJsPublication")
+            this.mustRunAfter("signJvmPublication")
+            this.mustRunAfter("signKotlinMultiplatformPublication")
+            this.mustRunAfter("signLinuxArm64Publication")
+            this.mustRunAfter("signLinuxX64Publication")
+            this.mustRunAfter("signWasmJsPublication")
+            this.mustRunAfter("signMingwX64Publication")
+            // this.mustRunAfter("signWasmWasiPublication")
+        }
+
+        if (this.name.startsWith("linkDebugTest")) {
+            this.mustRunAfter("signAndroidNativeArm32Publication")
+            this.mustRunAfter("signAndroidNativeArm64Publication")
+            this.mustRunAfter("signAndroidNativeX64Publication")
+            this.mustRunAfter("signAndroidNativeX86Publication")
+            this.mustRunAfter("signJsPublication")
+            this.mustRunAfter("signJvmPublication")
+            this.mustRunAfter("signKotlinMultiplatformPublication")
+            this.mustRunAfter("signLinuxArm64Publication")
+            this.mustRunAfter("signLinuxX64Publication")
+            this.mustRunAfter("signWasmJsPublication")
+            this.mustRunAfter("signMingwX64Publication")
+            // this.mustRunAfter("signWasmWasiPublication")
         }
     }
 }
