@@ -1,3 +1,9 @@
+# v2.5
+
++ bump dependencies and kotlin version
++ new: added several native targets and wasm-js target
++ fix: Json.toJsonOrIntegral() method and toJson[Mutable]Object() converters for pairs iterables
+
 # v2.4
 
 + fix: fixed Json.toJson() method for numbers and booleans wrongly converted to string
