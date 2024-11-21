@@ -13,8 +13,15 @@ Essential-kson is a JSON library which:
 - exposes Json container objects as extensible open classes
 - provides a nice API with specialized getters and setters
 
-[TOTO - update]
-The current multiplatform targets are jvm, js(IR) and linux/mingwx64 native. Other targets could easily be added.
+Here is the list of currently supported targets:
+
+- Jvm
+- Js
+- Desktop native targets: linuxX64, linuxArm64, mingwX64
+- Android native targets: androidNativeX64, androidNativeX86, androidNativeArm32, androidNativeArm64
+- WasmJs
+
+Several iOS and macOS platforms are targeted as well, but they would need some help from a contributor proficient with Apple native kotlin code packaging (iosX64, iosArm64, iosSimulatorArm64, macosX64, macosArm64, tvosArm64, tvosSimulatorArm64, tvosX64, watchosArm64, watchosX64, watchosSimulatorArm64).
 
 ## Usage
 
