@@ -34,18 +34,18 @@ The `com.republicate.kson.Json` interface is implemented by its two inner classe
 Using Maven:
 
     <dependency>
-        <groupId>com.republicate</groupId>
+        <groupId>com.republicate.kson</groupId>
         <artifactId>essential-kson</artifactId>
         <version>2.5</version>
     </dependency>
 
 Using Gradle:
 
-    implementation 'com.republicate:essential-kson:2.5'
+    implementation 'com.republicate.kson:essential-kson:2.5'
 
 ### Parsing JSON
 
-The generic `Json.parse(string_or_stream)` method will return a `com.republicate.Json` value containing a `Json.Object` or `Json.Array` object (or throw a JsonException if parsing failed).
+The generic `Json.parse(string_or_stream)` method will return a `com.republicate.kson.Json` value containing a `Json.Object` or `Json.Array` object (or throw a JsonException if parsing failed).
 
 If you want to parse a content without knowing if it's a JSON container or a simple JSON value,
 you will call the `Json.parseValue(string_or_stream)` method to get an `Any?`. 
