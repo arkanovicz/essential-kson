@@ -128,7 +128,7 @@ kotlin {
         val wasmJsTest by getting
         all {
             // languageSettings.enableLanguageFeature("InlineClasses")
-            languageSettings.optIn("expect-actual-classes")
+            // languageSettings.optIn("expect-actual-classes")
             // languageSettings.optIn("kotlin.ExperimentalUnsignedTypes")
             languageSettings.optIn("kotlin.ExperimentalStdlibApi")
         }
@@ -259,6 +259,18 @@ tasks.all {
             this.mustRunAfter("signLinuxX64Publication")
             this.mustRunAfter("signWasmJsPublication")
             this.mustRunAfter("signMingwX64Publication")
+            this.mustRunAfter("signIosArm64Publication")
+            this.mustRunAfter("signIosSimulatorArm64Publication")
+            this.mustRunAfter("signIosX64Publication")
+            this.mustRunAfter("signMacosArm64Publication")
+            this.mustRunAfter("signMacosX64Publication")
+            this.mustRunAfter("signTvosArm64Publication")
+            this.mustRunAfter("signTvosSimulatorArm64Publication")
+            this.mustRunAfter("signTvosX64Publication")
+            this.mustRunAfter("signWatchosArm64Publication")
+            this.mustRunAfter("signWatchosSimulatorArm64Publication")
+            this.mustRunAfter("signWatchosX64Publication")
+            this.mustRunAfter("signWasmJsPublication")
             // this.mustRunAfter("signWasmWasiPublication")
         }
 

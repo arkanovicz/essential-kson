@@ -13,15 +13,19 @@ Essential-kson is a JSON library which:
 - exposes Json container objects as extensible open classes
 - provides a nice API with specialized getters and setters
 
+The main differences with `kotlinx-serialization-json` are the extensibility and the absence of wrapping of raw values.
+
 Here is the list of currently supported targets:
 
 - Jvm
 - Js
 - Desktop native targets: linuxX64, linuxArm64, mingwX64
 - Android native targets: androidNativeX64, androidNativeX86, androidNativeArm32, androidNativeArm64
-- WasmJs
-
-Several iOS and macOS platforms are targeted as well, but they would need some help from a contributor proficient with Apple native kotlin code packaging (iosX64, iosArm64, iosSimulatorArm64, macosX64, macosArm64, tvosArm64, tvosSimulatorArm64, tvosX64, watchosArm64, watchosX64, watchosSimulatorArm64).
+- iOS native targets: iosArm64, iosSimulatorArm64, iosX64
+- macOS native targets: macosArm64, macosX64
+- tvOS native targets: tvosArm64, tvosSimulatorArm64, tvosX64
+- watchOS native targets: watchosArm64, watchosSimulatorArm64, watchosX64
+- wasm: wasmJs
 
 ## Usage
 
@@ -36,12 +40,12 @@ Using Maven:
     <dependency>
         <groupId>com.republicate.kson</groupId>
         <artifactId>essential-kson</artifactId>
-        <version>2.5</version>
+        <version>2.6</version>
     </dependency>
 
 Using Gradle:
 
-    implementation 'com.republicate.kson:essential-kson:2.5'
+    implementation 'com.republicate.kson:essential-kson:2.6'
 
 ### Parsing JSON
 
