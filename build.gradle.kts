@@ -17,7 +17,7 @@ plugins {
 }
 
 group = "com.republicate.kson"
-version = "2.6-SNAPSHOT"
+version = "2.6"
 
 @OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
