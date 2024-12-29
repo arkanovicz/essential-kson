@@ -3,13 +3,10 @@ import org.gradle.kotlin.dsl.support.kotlinCompilerOptions
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
-import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
-import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-
-
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.dokka)
@@ -20,7 +17,7 @@ plugins {
 }
 
 group = "com.republicate.kson"
-version = "2.5"
+version = "2.6-SNAPSHOT"
 
 @OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
@@ -40,11 +37,14 @@ kotlin {
 
     compilerOptions {
         apiVersion.set(KotlinVersion.KOTLIN_2_0)
-        JvmPlatforms.jvmPlatformByTargetVersion(JvmTarget.JVM_17)
     }
 
     // explicitApi()
-    jvm()
+    jvm {
+        compilerOptions {
+            jvmTarget = JvmTarget.JVM_17
+        }
+    }
     js {
         browser {
             testTask {
@@ -84,11 +84,11 @@ kotlin {
     watchosX64()
     watchosSimulatorArm64()
     mingwX64()
-    /* waiting for kotlinx-datetime 0.6.2 and ktor 3.0.0 */
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
     }
+    // Waiting for next version of kotlinx-datetime
     // wasmWasi()
     sourceSets {
         val commonMain by getting {
