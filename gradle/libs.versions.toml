@@ -2,13 +2,14 @@
 kotlin = "2.1.0"
 dokka = "1.9.20"
 nexus-publish = "2.0.0"
-
-kotlinx-datetime="0.6.1"
+# newer versions of kotlinx-datetime are available, but the move of kotlinx.datetime.Instant towards kotlin.time.Instant
+# seems to have broken some native targets
+kotlinx-datetime="0.6.2"
 bignum = "0.3.10"
-kotlin-logging = "7.0.0"
-kotlinx-coroutines = "1.9.0"
-ktor = "3.0.0"
-slf4j = "2.0.16"
+kotlin-logging = "7.0.7"
+kotlinx-coroutines = "1.10.2"
+ktor = "3.2.1"
+slf4j = "2.0.17"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }

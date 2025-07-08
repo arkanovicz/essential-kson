@@ -13,7 +13,7 @@ Essential-kson is a JSON library which:
 - exposes Json container objects as extensible open classes
 - provides a nice API with specialized getters and setters
 
-The main differences with `kotlinx-serialization-json` are the extensibility and the absence of wrapping of raw values.
+The main differences with `kotlinx-serialization-json` are the extensibility and the absence of wrapping of raw values, along with nice type-specific getters.
 
 Here is the list of currently supported targets:
 

@@ -1,25 +1,22 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
 
-import org.gradle.kotlin.dsl.support.kotlinCompilerOptions
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.dokka)
     `maven-publish`
     alias(libs.plugins.nexusPublish)
     signing
-    id("com.github.ben-manes.versions") version "0.51.0"
 }
 
 group = "com.republicate.kson"
-version = "2.6"
+version = "2.7"
 
-@OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
 
     applyDefaultHierarchyTemplate {
@@ -100,10 +97,7 @@ kotlin {
         }
         val commonTest by getting {
             dependencies {
-                //implementation(kotlin("test"))
                 implementation(libs.kotlin.test)
-                // implementation(kotlin("test-common"))
-                // implementation(kotlin("test-annotations-common"))
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.kotlinx.coroutines.test)
                 // implementation(libs.ktor)
@@ -127,9 +121,6 @@ kotlin {
         val wasmJsMain by getting
         val wasmJsTest by getting
         all {
-            // languageSettings.enableLanguageFeature("InlineClasses")
-            // languageSettings.optIn("expect-actual-classes")
-            // languageSettings.optIn("kotlin.ExperimentalUnsignedTypes")
             languageSettings.optIn("kotlin.ExperimentalStdlibApi")
         }
     }
@@ -159,45 +150,64 @@ signing {
     sign(publishing.publications)
 }
 
-publishing {
-    publications.withType<MavenPublication> {
-        pom {
-            name.set("essential-kson")
-            description.set("essential-kson $version - Lightweight JSON library for Kotlin")
-            url.set("https://gitlab.republicate.com/claude/essential-kson")
-            licenses {
-                license {
-                    name.set("The Apache Software License, Version 2.0")
-                    url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+afterEvaluate {
+    publishing {
+        publications.withType<MavenPublication> {
+            pom {
+                name.set("essential-kson")
+                description.set("essential-kson $version - Lightweight JSON library for Kotlin")
+                url.set("https://github.com/arkanovicz/essential-kson")
+                licenses {
+                    license {
+                        name.set("The Apache Software License, Version 2.0")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("cbrisson")
+                        name.set("Claude Brisson")
+                        email.set("claude.brisson@gmail.com")
+                        organization.set("republicate.com")
+                        organizationUrl.set("https://republicate.com")
+                    }
+                }
+                scm {
+                    connection.set("scm:git@github.com:arkanovicz/essential-kson.git")
+                    url.set("https://github.com/arkanovicz/essential-kson")
                 }
             }
-            developers {
-                developer {
-                    name.set("Claude Brisson")
-                    email.set("claude.brisson@gmail.com")
-                    organization.set("republicate.com")
-                    organizationUrl.set("https://republicate.com")
-                }
+            // Task ':publish<platform>PublicationToMavenLocal' uses this output of task ':sign<platform>Publication' without declaring an explicit or implicit dependency.
+            // => generate dokkaJar tasks for each platform, instead of declaring: artifact(tasks["dokkaJar"])
+            val dokkaJar = project.tasks.register("${name}DokkaJar", Jar::class) {
+                group = JavaBasePlugin.DOCUMENTATION_GROUP
+                description = "Assembles Kotlin docs with Dokka into a Javadoc jar"
+                archiveClassifier.set("javadoc")
+                from(tasks.named("dokkaHtml"))
+
+                // Each archive name should be distinct, to avoid implicit dependency issues.
+                // We use the same format as the sources Jar tasks.
+                // https://youtrack.jetbrains.com/issue/KT-46466
+                archiveBaseName.set("${archiveBaseName.get()}-${name}")
             }
-            scm {
-                connection.set("scm:git@gitlab.republicate.com:claude/essential-kson.git")
-                url.set("https://gitlab.republicate.com/claude/essential-kson")
-            }
+            artifact(dokkaJar)
         }
-        artifact(tasks["dokkaJar"])
     }
 }
 
 nexusPublishing {
     repositories {
         sonatype {
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
             useStaging.set(true)
         }
     }
 }
 
-/*
-// work around https://youtrack.jetbrains.com/issue/KT-61313
+// Resolves issues with .asc task output of the sign task of native targets.
+// See: https://github.com/gradle/gradle/issues/26132
+// And: https://youtrack.jetbrains.com/issue/KT-46466
 tasks.withType<Sign>().configureEach {
     val pubName = name.removePrefix("sign").removeSuffix("Publication")
 
@@ -213,23 +223,8 @@ tasks.withType<Sign>().configureEach {
     }
 }
 
-
-tasks.withType<PublishToMavenLocal>() {
-    val pubName = name.removePrefix("publish").removeSuffix("ToMavenLocal")
-    tasks.findByName("sign$pubName")?.let {
-        dependsOn(it)
-    }
-}
-
-// Add another weird dependency between 32/64 bits
-tasks.findByName("publishAndroidNativeArm32PublicationToMavenLocal")?.apply {
-    tasks.findByName("signAndroidNativeArm64Publication")?.let {
-        dependsOn(it)
-    }
-}
-*/
-
 // Taken from bignum
+/*
 tasks.all {
     if (System.getProperty("os.name") == "Linux") {
         // Linux task dependecies
@@ -305,3 +300,4 @@ tasks.all {
         }
     }
 }
+*/
