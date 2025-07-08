@@ -1,3 +1,13 @@
+# v2.7
+
++ bump dependencies and kotlin version
++ new: added Uuid getter
+
+# v2.6
+
++ bump dependencies and kotlin version
++ new: added iOS, macOS, tvOS and watchOS platforms.
+
 # v2.5
 
 + bump dependencies and kotlin version
