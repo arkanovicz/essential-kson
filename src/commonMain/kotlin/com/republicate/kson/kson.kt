@@ -29,8 +29,9 @@ import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.ionspin.kotlin.bignum.integer.toBigInteger
 import kotlinx.datetime.LocalTime
-import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.atTime
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 expect interface JsonSerializable
 
@@ -53,6 +54,7 @@ class JsonException(message: String?, cause: Throwable? = null) : Exception(mess
  * Json container
  *
  */
+@OptIn(ExperimentalUuidApi::class)
 interface Json {
 
     /**
@@ -529,6 +531,14 @@ interface Json {
         fun getBytes(index: Int) = TypeUtils.toBytes(get(index))
 
         /**
+         * Returns the element at the specified position as an UUID.
+         * @param  index index of the element to return
+         * @return the element at the specified position as an Uuid value
+         * @throws ClassCastException if value cannot be retrieved as an Uuid.
+         */
+        fun getUuid(index: Int) = TypeUtils.toUuid(get(index))
+
+        /**
          * Returns the element the specified key as a reified type instance. Since this method
          * needs a <code>when</code> clause to return the result, it does have a performance cost
          * because of the branching.
@@ -884,6 +894,13 @@ interface Json {
          */
         fun getBytes(key: String) = TypeUtils.toBytes(get(key))
 
+        /**
+         * Returns the element at the specified position as an UUID.
+         * @param  index index of the element to return
+         * @return the element at the specified position as an Uuid value
+         * @throws ClassCastException if value cannot be retrieved as an Uuid.
+         */
+        fun getUuid(key: String) = TypeUtils.toUuid(get(key))
 
         /**
          * Returns the element the specified key as a reified type instance. Since this method
@@ -913,6 +930,7 @@ interface Json {
                 Array::class -> getArray(key)
                 Object::class -> getObject(key)
                 Json::class -> getJson(key)
+                Uuid::class -> getUuid(key)
                 else -> get(key) as T?
             } as T?
         }
@@ -1572,6 +1590,16 @@ interface Json {
                 is ByteArray -> value
                 is String -> value.encodeToByteArray()
                 else -> throw JsonException("cannot convert this value to byte array")
+            }
+        }
+
+        fun toUuid(value: Any?): Uuid? {
+            return when (value) {
+                null -> null
+                is Uuid -> value
+                is ByteArray -> Uuid.fromByteArray(value)
+                is String -> Uuid.parse(value)
+                else -> throw JsonException("cannot convert this value to uuid")
             }
         }
     }
