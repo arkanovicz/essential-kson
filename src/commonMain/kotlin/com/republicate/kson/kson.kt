@@ -1599,7 +1599,11 @@ interface Json {
                 is Uuid -> value
                 is ByteArray -> Uuid.fromByteArray(value)
                 is String -> Uuid.parse(value)
-                else -> throw JsonException("cannot convert this value to uuid")
+                else -> try {
+                    Uuid.parse(value.toString())
+                } catch (e: Exception) {
+                    throw JsonException("cannot convert this value to uuid", e)
+                }
             }
         }
     }
