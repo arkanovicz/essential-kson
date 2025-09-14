@@ -28,6 +28,7 @@ import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.ionspin.kotlin.bignum.integer.toBigInteger
+import com.republicate.kson.Json.Companion.toJsonOrIntegral
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.atTime
 import kotlin.uuid.ExperimentalUuidApi
@@ -284,6 +285,7 @@ interface Json {
                     is Json-> obj
                     is Map<*, *> -> obj.entries.map { it.key.toString() to toJsonOrIntegral(it.value) }.toMap(MutableObject())
                     is Collection<*> -> obj.mapTo(MutableArray()) { toJsonOrIntegral(it) }
+                    is Pair<*, *> -> MutableArray( toJsonOrIntegral(obj.first), toJsonOrIntegral(obj.second))
                     else -> obj.toString()
                 }
 

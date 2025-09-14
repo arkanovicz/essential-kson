@@ -870,4 +870,11 @@ class EssentialJsonTest : BaseTestUnit()
             expect(exp[17]) { null }
         }
     }
+
+    @Test
+    fun testConversions() {
+        val payload = Pair("a", Pair("b", 123))
+        val json = Json.toJson(payload)
+        assertEquals("""["a",["b",123]]""", json.toString())
+    }
 }
