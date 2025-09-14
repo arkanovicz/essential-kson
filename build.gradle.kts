@@ -12,6 +12,7 @@ plugins {
     `maven-publish`
     alias(libs.plugins.nexusPublish)
     signing
+    alias(libs.plugins.versions)
 }
 
 group = "com.republicate.kson"
