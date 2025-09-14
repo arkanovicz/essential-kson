@@ -40,12 +40,12 @@ Using Maven:
     <dependency>
         <groupId>com.republicate.kson</groupId>
         <artifactId>essential-kson</artifactId>
-        <version>2.6</version>
+        <version>2.8</version>
     </dependency>
 
 Using Gradle:
 
-    implementation 'com.republicate.kson:essential-kson:2.6'
+    implementation 'com.republicate.kson:essential-kson:2.8'
 
 ### Parsing JSON
 
@@ -84,6 +84,15 @@ Containers `toString()` and `toString(stream)` methods will render JSON strings 
 ### Converting to JSON
 
 The reentrant method `Json.toJson(Any)` will try hard to convert any standard container to a JSON structure.
+
+The following specialized methods handle specific cases:
+
+- `List<*>.toJsonArray()`
+- `List<*>.toMutableJsonArray()`
+- `Map<*,*>.toJsonObject()`
+- `Map<*,*>.toMutableJsonObject()`
+- `Iterable<Pair<*,*>>.toMJsonObject()`
+- `Iterable<Pair<*,*>>.toMutableJsonObject()`
 
 ## Ktor content negotiation integration
 
@@ -157,6 +166,52 @@ fun ContentNegotiationConfig.kson() {
         converter = KsonConverter)
 }
 
+// and in ktor configuration section:
+
+    install(ContentNegotiation) {
+        kson()
+    }
+
+
+```
+
+### Ktor v3.x
+
+Use the following code to use essential-kson with ktor 2.x content negotiation:
+
+```kotlin
+
+import com.republicate.kson.Json
+
+object KsonConverter: ContentConverter {
+
+    override suspend fun deserialize(charset: Charset, typeInfo: TypeInfo, content: ByteReadChannel): Any? {
+        val buffer = StringBuilder()
+        var first = true
+        while (true) {
+            if (first) first = false
+            else buffer.append('\n')
+            if (!content.readUTF8LineTo(buffer)) break
+        }
+        return Json.parseValue(buffer.toString())
+    }
+
+    override suspend fun serialize(
+        contentType: ContentType,
+        charset: Charset,
+        typeInfo: TypeInfo,
+        value: Any?
+    ): OutgoingContent? {
+        if (value !is Json) throw kotlinx.io.IOException("content is not Json")
+        return TextContent(value.toString(), ContentType.Application.Json)
+    }
+}
+
+fun ContentNegotiationConfig.kson() {
+    register(
+        contentType = ContentType.Application.Json,
+        converter = KsonConverter)
+}
 
 // and in ktor configuration section:
 
