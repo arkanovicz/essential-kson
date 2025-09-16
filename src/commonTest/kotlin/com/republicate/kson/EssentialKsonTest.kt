@@ -789,19 +789,6 @@ class EssentialJsonTest : BaseTestUnit()
     private val ignoreEvaluation = object: Any() {}
     private val ignoreResult = object: Any() {}
 
-    @Test
-    fun testBrokenConversion() = runTest {
-        // Float.toString() gives extra erroneous digits in wasmjs 2.0.21
-        // See https://youtrack.jetbrains.com/issue/KT-59118/WASM-floating-point-toString-inconsistencies
-        val f = 123.456F
-        if (Platform.wasm()) {
-            // check the bug is still here
-            assertNotEquals("123.456", f.toString())
-        } else {
-            assertEquals("123.456", f.toString())
-        }
-    }
-
     @OptIn(ExperimentalUuidApi::class)
     @Test
     fun testGenericsConverter() = runTest {

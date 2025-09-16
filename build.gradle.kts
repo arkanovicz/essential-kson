@@ -34,7 +34,7 @@ kotlin {
     }
 
     compilerOptions {
-        apiVersion.set(KotlinVersion.KOTLIN_2_0)
+        apiVersion.set(KotlinVersion.KOTLIN_2_2)
     }
 
     // explicitApi()

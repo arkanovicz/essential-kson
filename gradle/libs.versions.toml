@@ -5,9 +5,7 @@ dokka = "1.9.20"
 nexus-publish = "2.0.0"
 versions = "0.52.0"
 # libraries
-# newer versions of kotlinx-datetime are available, but the move of kotlinx.datetime.Instant towards kotlin.time.Instant
-# seems to have broken some native targets
-kotlinx-datetime="0.7.1-0.6.x-compat"
+kotlinx-datetime="0.7.1"
 bignum = "0.3.10"
 kotlin-logging = "7.0.13"
 kotlinx-coroutines = "1.10.2"

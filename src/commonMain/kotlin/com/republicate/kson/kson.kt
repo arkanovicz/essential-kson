@@ -21,16 +21,16 @@ package com.republicate.kson
 import com.ionspin.kotlin.bignum.BigNumber
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlin.math.max
 import io.github.oshai.kotlinlogging.KotlinLogging
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.ionspin.kotlin.bignum.integer.toBigInteger
-import com.republicate.kson.Json.Companion.toJsonOrIntegral
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.atTime
+import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -55,7 +55,7 @@ class JsonException(message: String?, cause: Throwable? = null) : Exception(mess
  * Json container
  *
  */
-@OptIn(ExperimentalUuidApi::class)
+@OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
 interface Json {
 
     /**

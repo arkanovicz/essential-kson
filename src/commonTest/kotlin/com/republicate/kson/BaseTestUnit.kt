@@ -1,9 +1,9 @@
 package com.republicate.kson
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import kotlin.time.ExperimentalTime
 
 fun Double.toString(numOfDec: Int): String {
     val integerDigits = this.toInt()
@@ -13,6 +13,7 @@ fun Double.toString(numOfDec: Int): String {
 
 expect suspend fun getResource(path: String): String
 
+@OptIn(ExperimentalTime::class)
 abstract class BaseTestUnit
 {
     var startNanos = 0L
