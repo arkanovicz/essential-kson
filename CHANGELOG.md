@@ -1,3 +1,9 @@
+# v2.8
+
++ bump dependencies and kotlin version
++ migrate Clock and Instant from kotlinx.datetime to kotlin.time
++ add handling for Pair in Json.toJson() conversion (towards two-elements array)
+
 # v2.7
 
 + bump dependencies and kotlin version
