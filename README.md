@@ -94,6 +94,38 @@ The following specialized methods handle specific cases:
 - `Iterable<Pair<*,*>>.toMJsonObject()`
 - `Iterable<Pair<*,*>>.toMutableJsonObject()`
 
+### Inline DSL
+
+The library provides a lightweight DSL for building JSON structures inline:
+
+```kotlin
+import com.republicate.kson.obj
+import com.republicate.kson.arr
+
+// Objects: "key" to value
+val user = obj {
+    "name" to "John"
+    "age" to 30
+    "active" to true
+    "address" to obj {
+        "city" to "Paris"
+        "zip" to "75001"
+    }
+}
+
+// Arrays: bracket syntax
+val numbers = arr[1, 2, 3, 4]
+
+// Mixed structures
+val data = obj {
+    "items" to arr[1, 2, 3]
+    "matrix" to arr[arr[1, 2], arr[3, 4]]
+    "users" to arr[obj { "name" to "Alice" }, obj { "name" to "Bob" }]
+}
+```
+
+**Caveat**: The `to` operator inside `obj { }` both assigns to the object and returns a `Pair`. When using `mapOf("k" to "v")` inside the scope, "k" will be added to the enclosing object as a side effect. Use `Pair("k", "v")` or build maps outside the DSL scope to avoid this.
+
 ## Ktor content negotiation integration
 
 ### Ktor v1.x

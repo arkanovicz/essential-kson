@@ -1620,7 +1620,7 @@ fun <T> List<T>.toJsonArray() = Json.toJson(this) as Json.Array
  * Inline DSL for JSON containers
  *
  * obj { "key" to value; "nested" to obj { "x" to 1 } }
- * arr[1, 2, 3] or arr { e(1); +obj { "y" to 2 } }
+ * arr[1, 2, 3]
  *
  */
 
@@ -1632,27 +1632,9 @@ class JsonObjectScope @PublishedApi internal constructor(
     @PublishedApi internal val target: Json.MutableObject
 ) {
     /** Set a key to a value: "key" to value */
-    infix fun String.to(value: Any?) {
+    infix fun String.to(value: Any?): Pair<String, Any?> {
         target[this] = Json.toJsonOrIntegral(value)
-    }
-
-    /** Create a nested object */
-    inline fun obj(init: JsonObjectScope.() -> Unit): Json.MutableObject =
-        Json.MutableObject().also { JsonObjectScope(it).init() }
-}
-
-@JsonDsl
-class JsonArrayScope @PublishedApi internal constructor(
-    @PublishedApi internal val target: Json.MutableArray
-) {
-    /** Add element: e(value) */
-    fun e(value: Any?) {
-        target.add(Json.toJsonOrIntegral(value))
-    }
-
-    /** Add via unaryPlus: +value */
-    operator fun Any?.unaryPlus() {
-        target.add(Json.toJsonOrIntegral(this))
+        return Pair(this, value)
     }
 
     /** Create a nested object */
@@ -1664,15 +1646,11 @@ class JsonArrayScope @PublishedApi internal constructor(
 inline fun obj(init: JsonObjectScope.() -> Unit): Json.MutableObject =
     Json.MutableObject().also { JsonObjectScope(it).init() }
 
-/** Array builder with bracket syntax: arr[1, 2, 3] */
+/** Array literal: arr[1, 2, 3] */
 object arr {
     operator fun get(vararg items: Any?): Json.MutableArray =
         Json.MutableArray().apply { items.forEach { add(Json.toJsonOrIntegral(it)) } }
 }
-
-/** Build a JSON array with builder */
-inline fun arr(init: JsonArrayScope.() -> Unit): Json.MutableArray =
-    Json.MutableArray().also { JsonArrayScope(it).init() }
 
 fun <T> List<T>.toMutableJsonArray() = Json.toJson(this) as Json.MutableArray
 fun <K, V> Map<K, V>.toJsonObject() = Json.toJson(this) as Json.Object

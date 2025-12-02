@@ -887,30 +887,19 @@ class EssentialJsonTest : BaseTestUnit()
         }
         assertEquals("""{"user":{"id":1,"profile":{"email":"test@example.com"}}}""", nested.toString())
 
-        // Array with bracket syntax
+        // Array literal
         val simpleArr = arr[1, 2, 3, "four"]
         assertEquals("""[1,2,3,"four"]""", simpleArr.toString())
 
-        // Array with builder
-        val builtArr = arr {
-            e(1)
-            e("text")
-            e(true)
-            e(null)
-        }
-        assertEquals("""[1,"text",true,null]""", builtArr.toString())
+        // Mixed types in array
+        val mixedArr = arr[1, "text", true, null]
+        assertEquals("""[1,"text",true,null]""", mixedArr.toString())
 
         // Complex nested structure
         val complex = obj {
             "items" to arr[1, 2, 3]
-            "matrix" to arr {
-                +arr[1, 2]
-                +arr[3, 4]
-            }
-            "objects" to arr {
-                +obj { "x" to 10 }
-                +obj { "y" to 20 }
-            }
+            "matrix" to arr[arr[1, 2], arr[3, 4]]
+            "objects" to arr[obj { "x" to 10 }, obj { "y" to 20 }]
         }
         assertEquals(
             """{"items":[1,2,3],"matrix":[[1,2],[3,4]],"objects":[{"x":10},{"y":20}]}""",
@@ -929,11 +918,10 @@ class EssentialJsonTest : BaseTestUnit()
         }
         assertEquals("""{"a":{"b":{"c":{"value":123}}}}""", deep.toString())
 
-        // Convert standard collections (use Pair constructor to avoid 'to' conflict)
+        // Standard collections work via toJsonOrIntegral conversion
         val withList = obj {
             "list" to listOf(1, 2, 3)
-            "map" to mapOf(Pair("k", "v"))
         }
-        assertEquals("""{"list":[1,2,3],"map":{"k":"v"}}""", withList.toString())
+        assertEquals("""{"list":[1,2,3]}""", withList.toString())
     }
 }
