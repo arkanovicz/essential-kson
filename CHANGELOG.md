@@ -1,3 +1,7 @@
+# v2.9
+
++ add inline DSL for JSON containers
+
 # v2.8
 
 + bump dependencies and kotlin version
