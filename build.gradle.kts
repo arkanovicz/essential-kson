@@ -68,9 +68,6 @@ kotlin {
     androidNativeX86()
     androidNativeArm32()
     androidNativeArm64()
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
     macosX64()
     macosArm64()
     tvosArm64()
@@ -86,8 +83,10 @@ kotlin {
     wasmJs {
         browser()
     }
-    // Waiting for next version of kotlinx-datetime
-    // wasmWasi()
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmWasi {
+        nodejs()
+    }
     sourceSets {
         val commonMain by getting {
             dependencies {
