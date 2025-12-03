@@ -20,14 +20,7 @@ version = "2.9"
 
 kotlin {
 
-    applyDefaultHierarchyTemplate {
-        common {
-            group("commonJs") {
-                withJs()
-                withWasmJs()
-            }
-        }
-    }
+    applyDefaultHierarchyTemplate()
 
     jvmToolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
@@ -110,8 +103,8 @@ kotlin {
                 runtimeOnly(libs.slf4j)
             }
         }
-        val commonJsMain by getting
-        val commonJsTest by getting {
+        val webMain by getting
+        val webTest by getting {
             dependencies {
                 implementation(libs.ktor)
             }
