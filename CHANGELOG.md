@@ -1,3 +1,8 @@
+# v2.10
+
++ bump Kotlin to 2.3.0
++ add kotlinx-serialization-core dependency to fix JS/WasmJS classpath resolution issue
+
 # v2.9
 
 + add inline DSL for JSON containers
