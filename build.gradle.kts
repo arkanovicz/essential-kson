@@ -16,7 +16,7 @@ plugins {
 }
 
 group = "com.republicate.kson"
-version = "2.9"
+version = "2.10"
 
 kotlin {
 
@@ -86,6 +86,8 @@ kotlin {
                 api(libs.kotlinx.datetime)
                 api(libs.bignum)
                 implementation(libs.kotlin.logging)
+                // Force proper version of serialization-core to fix JS classpath resolution
+                implementation(libs.kotlinx.serialization.core)
             }
         }
         val commonTest by getting {
