@@ -147,11 +147,13 @@ tasks {
     // Patch wasmWasi test runner to add filesystem preopens
     val patchWasmWasiTestRunner by registering {
         dependsOn("compileTestDevelopmentExecutableKotlinWasmWasi")
+        // Capture project root at configuration time for configuration cache compatibility
+        val projectRoot = layout.projectDirectory.asFile.absolutePath.replace("\\", "/")
+        val mjsFilePath = layout.buildDirectory.file("compileSync/wasmWasi/test/testDevelopmentExecutable/kotlin/essential-kson-test.mjs")
         doLast {
-            val mjsFile = file("build/compileSync/wasmWasi/test/testDevelopmentExecutable/kotlin/essential-kson-test.mjs")
+            val mjsFile = mjsFilePath.get().asFile
             if (mjsFile.exists()) {
                 val content = mjsFile.readText()
-                val projectRoot = projectDir.absolutePath.replace("\\", "/")
                 val patched = content.replace(
                     "const wasi = new WASI({ version: 'preview1', args: argv, env, });",
                     "const wasi = new WASI({ version: 'preview1', args: argv, env, preopens: { '.': '$projectRoot' } });"
