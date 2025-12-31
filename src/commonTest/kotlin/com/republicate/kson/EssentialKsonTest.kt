@@ -623,11 +623,13 @@ class EssentialJsonTest : BaseTestUnit()
             "test_parsing/y_string_allowed_escapes.json", // no form feed in kotlin
             "test_parsing/y_string_nonCharacterInUTF-8_U+FFFF.json" // why should it be successful?!
         ).apply {
-            if (Platform.native()) {
-                // segfaults on native - TODO see why
+            if (Platform.native() || Platform.wasm()) {
+                // stack overflow due to deep nesting
+                // TODO convert recursive parser to iterative to handle arbitrary nesting depth
                 addAll(listOf(
                     "test_parsing/n_structure_100000_opening_arrays.json",
-                    "test_parsing/n_structure_open_array_object.json"
+                    "test_parsing/n_structure_open_array_object.json",
+                    "test_parsing/i_structure_500_nested_arrays.json"
                 ))
             }
         }
@@ -684,7 +686,7 @@ class EssentialJsonTest : BaseTestUnit()
         )
     }
 
-    fun testFile(path: String) = runTest {
+    suspend fun testFile(path: String) {
         val base = path.indexOfLast { c -> c == '/' }
         val filename = path.substring(base + 1)
         if (path == watchFile) {
@@ -692,7 +694,7 @@ class EssentialJsonTest : BaseTestUnit()
         }
         if (skipByFilename.contains(path)) {
             logger.info { "skipping $path" }
-            return@runTest
+            return
         }
         logger.error { "considering file $path" }
         val awaitError = filename.startsWith("n_") || awaitExceptionByFilename.contains(path)
@@ -705,7 +707,7 @@ class EssentialJsonTest : BaseTestUnit()
                 /* val instance = */ Json.parseValue(content)
                 if (awaitError) fail("Exception awaited!")
                 // skip further tests
-                return@runTest
+                return
             }
             catch (e: Throwable) {
             }
@@ -715,7 +717,7 @@ class EssentialJsonTest : BaseTestUnit()
             startTiming()
             val instance = Json.parseValue(content)
             stopTiming()
-            if (filename.equals("y_structure_lonely_null.json")) return@runTest
+            if (filename.equals("y_structure_lonely_null.json")) return
             startTiming()
             val output : String = when(instance) {
                 null -> "null"

@@ -115,6 +115,11 @@ kotlin {
         val jsTest by getting
         val wasmJsMain by getting
         val wasmJsTest by getting
+        val wasmWasiTest by getting {
+            dependencies {
+                implementation(libs.kotlinx.io)
+            }
+        }
         all {
             languageSettings.optIn("kotlin.ExperimentalStdlibApi")
         }
@@ -137,6 +142,26 @@ tasks {
     }
     withType<DokkaTask>().configureEach {
         notCompatibleWithConfigurationCache("https://github.com/Kotlin/dokka/issues/2231")
+    }
+
+    // Patch wasmWasi test runner to add filesystem preopens
+    val patchWasmWasiTestRunner by registering {
+        dependsOn("compileTestDevelopmentExecutableKotlinWasmWasi")
+        doLast {
+            val mjsFile = file("build/compileSync/wasmWasi/test/testDevelopmentExecutable/kotlin/essential-kson-test.mjs")
+            if (mjsFile.exists()) {
+                val content = mjsFile.readText()
+                val projectRoot = projectDir.absolutePath.replace("\\", "/")
+                val patched = content.replace(
+                    "const wasi = new WASI({ version: 'preview1', args: argv, env, });",
+                    "const wasi = new WASI({ version: 'preview1', args: argv, env, preopens: { '.': '$projectRoot' } });"
+                )
+                mjsFile.writeText(patched)
+            }
+        }
+    }
+    named("wasmWasiNodeTest") {
+        dependsOn(patchWasmWasiTestRunner)
     }
 }
 
