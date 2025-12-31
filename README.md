@@ -40,7 +40,7 @@ Using Maven:
     <dependency>
         <groupId>com.republicate.kson</groupId>
         <artifactId>essential-kson</artifactId>
-        <version>2.9</version>
+        <version>2.10</version>
     </dependency>
 
 Using Gradle:
