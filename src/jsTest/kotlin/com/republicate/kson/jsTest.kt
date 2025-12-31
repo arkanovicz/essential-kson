@@ -8,12 +8,8 @@ private fun readFileNode(filePath: String): String {
     return js("require('fs').readFileSync(filePath, 'utf8')") as String
 }
 
-// Get project root from __dirname (build output directory)
-// __dirname is like /project/build/compileSync/js/test/testDevelopmentExecutable/kotlin
-// Need to go 5 levels up: kotlin -> testDevelopmentExecutable -> test -> js -> compileSync -> build -> project
-private fun getProjectRoot(): String {
-    return js("require('path').resolve(__dirname, '../../../../..')") as String
-}
+// Get project root from generated BuildConfig
+private fun getProjectRoot(): String = BuildConfig.PROJECT_ROOT
 
 // Resolve path using Node.js path module
 private fun resolvePath(vararg paths: String): String {

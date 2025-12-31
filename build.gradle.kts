@@ -112,7 +112,9 @@ kotlin {
             }
         }
         val jsMain by getting
-        val jsTest by getting
+        val jsTest by getting {
+            kotlin.srcDir(layout.buildDirectory.dir("generated/jsTest/kotlin"))
+        }
         val wasmJsMain by getting
         val wasmJsTest by getting
         val wasmWasiTest by getting {
@@ -142,6 +144,28 @@ tasks {
     }
     withType<DokkaTask>().configureEach {
         notCompatibleWithConfigurationCache("https://github.com/Kotlin/dokka/issues/2231")
+    }
+
+    // Generate BuildConfig with project path for jsTest
+    val generateJsTestBuildConfig by registering {
+        val projectRoot = layout.projectDirectory.asFile.absolutePath.replace("\\", "/")
+        val outputDir = layout.buildDirectory.dir("generated/jsTest/kotlin")
+        outputs.dir(outputDir)
+        doLast {
+            val dir = outputDir.get().asFile.resolve("com/republicate/kson")
+            dir.mkdirs()
+            dir.resolve("BuildConfig.kt").writeText("""
+                package com.republicate.kson
+
+                object BuildConfig {
+                    const val PROJECT_ROOT = "$projectRoot"
+                }
+            """.trimIndent())
+        }
+    }
+
+    named("compileTestKotlinJs") {
+        dependsOn(generateJsTestBuildConfig)
     }
 
     // Patch wasmWasi test runner to add filesystem preopens
