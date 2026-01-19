@@ -927,4 +927,20 @@ class EssentialJsonTest : BaseTestUnit()
         }
         assertEquals("""{"list":[1,2,3]}""", withList.toString())
     }
+
+    @Test
+    fun testBigDecimalConversions() = runTest {
+        // JSON numbers are parsed as BigDecimal, getDouble/getInt/getLong/getFloat should handle them
+        val json = """{"d":0.9816463694852942,"i":42,"l":9876543210,"f":3.14}"""
+        val obj = Json.parse(json)?.asObject()!!
+
+        // Verify internal representation is BigDecimal
+        assertTrue(obj["d"] is BigDecimal, "Expected BigDecimal, got ${obj["d"]?.let { it::class }}")
+
+        // Verify conversions work
+        assertEquals(0.9816463694852942, obj.getDouble("d"))
+        assertEquals(42, obj.getInt("i"))
+        assertEquals(9876543210L, obj.getLong("l"))
+        assertEquals(3.14f, obj.getFloat("f")!!, 0.001f)
+    }
 }

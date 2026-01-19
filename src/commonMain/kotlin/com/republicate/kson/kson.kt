@@ -1504,6 +1504,7 @@ interface Json {
             when (value) {
                 null -> null
                 is Boolean -> if (value) 1 else 0
+                is BigDecimal -> value.intValue(false)
                 is Number -> value.toInt()
                 is String -> value.toInt()
                 else -> throw JsonException("cannot convert this value to int")
@@ -1513,6 +1514,7 @@ interface Json {
             when (value) {
                 null -> null
                 is Boolean -> if (value) 1L else 0L
+                is BigDecimal -> value.longValue(false)
                 is Number -> value.toLong()
                 is String -> value.toLong()
                 else -> throw JsonException("cannot convert this value to long")
@@ -1530,6 +1532,7 @@ interface Json {
         fun toFloat(value: Any?): Float? =
             when (value) {
                 null -> null
+                is BigDecimal -> value.floatValue(false)
                 is Number -> value.toFloat()
                 is String -> value.toFloat()
                 else -> throw JsonException("cannot convert this value to float")
@@ -1538,6 +1541,7 @@ interface Json {
         fun toDouble(value: Any?): Double? =
             when (value) {
                 null -> null
+                is BigDecimal -> value.doubleValue(false)
                 is Number -> value.toDouble()
                 is String -> value.toDouble()
                 else -> throw JsonException("cannot convert this value to double")
