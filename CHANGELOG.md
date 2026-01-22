@@ -1,3 +1,12 @@
+# v2.12
+
++ add Android JVM target
++ bump Gradle to 8.12, AGP 8.7.3
+
+# v2.11
+
++ fix TypeUtils to handle BigDecimal conversions to Int/Long/Float/Double
+
 # v2.10
 
 + bump Kotlin to 2.3.0

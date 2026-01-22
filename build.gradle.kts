@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.androidLibrary)
     alias(libs.plugins.dokka)
     `maven-publish`
     alias(libs.plugins.nexusPublish)
@@ -16,7 +17,7 @@ plugins {
 }
 
 group = "com.republicate.kson"
-version = "2.11"
+version = "2.12"
 
 kotlin {
 
@@ -35,6 +36,12 @@ kotlin {
         compilerOptions {
             jvmTarget = JvmTarget.JVM_17
         }
+    }
+    androidTarget {
+        compilerOptions {
+            jvmTarget = JvmTarget.JVM_17
+        }
+        publishLibraryVariants("release")
     }
     js {
         browser {
@@ -105,6 +112,12 @@ kotlin {
                 runtimeOnly(libs.slf4j)
             }
         }
+        val androidUnitTest by getting {
+            dependencies {
+                implementation(kotlin("test-junit"))
+                runtimeOnly(libs.slf4j)
+            }
+        }
         val webMain by getting
         val webTest by getting {
             dependencies {
@@ -132,6 +145,23 @@ kotlin {
             compileTaskProvider.get().compilerOptions {
                 freeCompilerArgs.add("-Xexpect-actual-classes")
             }
+        }
+    }
+}
+
+android {
+    namespace = "com.republicate.kson"
+    compileSdk = 35
+    defaultConfig {
+        minSdk = 21
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    sourceSets {
+        getByName("test") {
+            resources.srcDir("src/commonTest/resources")
         }
     }
 }

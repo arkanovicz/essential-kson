@@ -17,8 +17,9 @@ The main differences with `kotlinx-serialization-json` are the extensibility and
 
 Here is the list of currently supported targets:
 
-- Jvm
-- Js
+- JVM
+- Android JVM
+- JS
 - Desktop native targets: linuxX64, linuxArm64, mingwX64
 - Android native targets: androidNativeX64, androidNativeX86, androidNativeArm32, androidNativeArm64
 - iOS native targets: iosArm64, iosSimulatorArm64, iosX64
@@ -40,12 +41,12 @@ Using Maven:
     <dependency>
         <groupId>com.republicate.kson</groupId>
         <artifactId>essential-kson</artifactId>
-        <version>2.10</version>
+        <version>2.12</version>
     </dependency>
 
 Using Gradle:
 
-    implementation 'com.republicate.kson:essential-kson:2.8'
+    implementation 'com.republicate.kson:essential-kson:2.12'
 
 ### Parsing JSON
 
