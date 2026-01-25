@@ -17,7 +17,7 @@ plugins {
 }
 
 group = "com.republicate.kson"
-version = "2.12"
+version = "2.13"
 
 kotlin {
 

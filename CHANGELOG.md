@@ -1,3 +1,7 @@
+# v2.13
+
++ fix: escape special characters in JSON object keys during serialization
+
 # v2.12
 
 + add Android JVM target

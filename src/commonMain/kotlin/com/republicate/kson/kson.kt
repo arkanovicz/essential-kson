@@ -689,7 +689,7 @@ interface Json {
                     output.writeChar(',')
                 }
                 output.writeChar('"')
-                output.writeString(key)
+                Serializer.escapeJson(key, output)
                 output.writeChar('"')
                 output.writeChar(':')
                 if (value is Json) {
@@ -721,7 +721,7 @@ interface Json {
                 }
                 output.writeString(nextIndent)
                 output.writeChar('"')
-                output.writeString(key)
+                Serializer.escapeJson(key, output)
                 output.writeString("\" : ")
                 if (value is Json) {
                     value.toPrettyString(output, nextIndent)
