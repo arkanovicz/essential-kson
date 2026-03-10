@@ -41,19 +41,21 @@ Using Maven:
     <dependency>
         <groupId>com.republicate.kson</groupId>
         <artifactId>essential-kson</artifactId>
-        <version>2.12</version>
+        <version>2.14</version>
     </dependency>
 
 Using Gradle:
 
-    implementation 'com.republicate.kson:essential-kson:2.12'
+    implementation 'com.republicate.kson:essential-kson:2.14'
 
 ### Parsing JSON
 
 The generic `Json.parse(string_or_stream)` method will return a `com.republicate.kson.Json` value containing a `Json.Object` or `Json.Array` object (or throw a JsonException if parsing failed).
 
 If you want to parse a content without knowing if it's a JSON container or a simple JSON value,
-you will call the `Json.parseValue(string_or_stream)` method to get an `Any?`. 
+you will call the `Json.parseValue(string_or_stream)` method to get an `Any?`.
+
+Both methods accept an optional `allowBigNumbers` parameter (default: `true`). When `true`, numbers that don't fit in `Long` or `Double` are parsed as `BigInteger`/`BigDecimal`. When `false`, all numbers are parsed as `Long` or `Double`.
 
     import com.republicate.kson.Json;
     ...
@@ -67,6 +69,9 @@ you will call the `Json.parseValue(string_or_stream)` method to get an `Any?`.
 
     val value = Json.parseValue(string_or_reader);
     // value will either be a JSON container or a single Serializable value (or null)
+
+    // parse without big number support
+    val simple = Json.parse(jsonString, allowBigNumbers = false)
 
 ### Rendering JSON
 

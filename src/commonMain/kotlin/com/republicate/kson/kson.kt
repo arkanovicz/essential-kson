@@ -219,38 +219,42 @@ interface Json {
         /**
          * Parse a JSON string into a JSON container
          * @param content JSON content
+         * @param allowBigNumbers when true (default), numbers that don't fit in Long/Double are parsed as BigInteger/BigDecimal; when false, all numbers are parsed as Long or Double
          * @return parsed json
          * @throws JsonException if parsing fails
          */
         @Throws(JsonException::class)
-        fun parse(content: String) = Parser(content).parse()
+        fun parse(content: String, allowBigNumbers: Boolean = true) = Parser(content, allowBigNumbers).parse()
 
         /**
          * Parse a JSON stream into a JSON container
          * @param input JSON content reader
+         * @param allowBigNumbers when true (default), numbers that don't fit in Long/Double are parsed as BigInteger/BigDecimal; when false, all numbers are parsed as Long or Double
          * @return parsed json
          * @throws JsonException if parsing fails
          */
         @Throws(JsonException::class)
-        fun parse(input: Input) = Parser(input).parse()
+        fun parse(input: Input, allowBigNumbers: Boolean = true) = Parser(input, allowBigNumbers).parse()
 
         /**
          * Parse a JSON stream into a JSON container or simple value
          * @param content JSON content
+         * @param allowBigNumbers when true (default), numbers that don't fit in Long/Double are parsed as BigInteger/BigDecimal; when false, all numbers are parsed as Long or Double
          * @return parsed json
          * @throws JsonException if parsing fails
          */
         @Throws(JsonException::class)
-        fun parseValue(content: String) = Parser(content).parseValue(true)
+        fun parseValue(content: String, allowBigNumbers: Boolean = true) = Parser(content, allowBigNumbers).parseValue(true)
 
         /**
          * Parse a JSON stream into a JSON container or a simple value
          * @param reader JSON content reader
+         * @param allowBigNumbers when true (default), numbers that don't fit in Long/Double are parsed as BigInteger/BigDecimal; when false, all numbers are parsed as Long or Double
          * @return parsed json
          * @throws JsonException if parsing fails
          */
         @Throws(JsonException::class)
-        fun parseValue(reader: Input) = Parser(reader).parseValue(true)
+        fun parseValue(reader: Input, allowBigNumbers: Boolean = true) = Parser(reader, allowBigNumbers).parseValue(true)
 
         /**
          * Commodity method to escape a JSON string
@@ -1095,9 +1099,9 @@ interface Json {
     /**
      * JSON parser.
      */
-    private class Parser(val input: Input) {
+    private class Parser(val input: Input, val allowBigNumbers: Boolean = true) {
 
-        constructor (source : String): this(StringInput(source))
+        constructor (source : String, allowBigNumbers: Boolean = true): this(StringInput(source), allowBigNumbers)
 
         companion object {
             const val MIN_LONG_DECILE = Long.MIN_VALUE / 10
@@ -1413,11 +1417,11 @@ interface Json {
                     } else {
                         val strBuff = buffer.concatToString(0, pos)
                         if (!decimal) {
-                            BigInteger.parseString(strBuff)
+                            if (allowBigNumbers) BigInteger.parseString(strBuff) else strBuff.toDouble()
                         } else if (fitsInDouble) {
                             strBuff.toDouble()
                         } else {
-                            BigDecimal.parseString(strBuff)
+                            if (allowBigNumbers) BigDecimal.parseString(strBuff) else strBuff.toDouble()
                         }
                     }
             // we always end up reading one more character

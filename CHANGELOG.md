@@ -1,3 +1,7 @@
+# v2.14
+
++ new: `allowBigNumbers` parameter for `Json.parse()` and `Json.parseValue()` — when `false`, all numbers are parsed as Long or Double instead of BigInteger/BigDecimal
+
 # v2.13
 
 + fix: escape special characters in JSON object keys during serialization
