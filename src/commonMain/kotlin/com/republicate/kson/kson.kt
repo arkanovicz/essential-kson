@@ -582,24 +582,7 @@ interface Json {
             if (v is Json) v.copy() else v
         }
 
-        override fun equals(other: Any?): Boolean {
-            return when {
-                other == null -> false
-                other === this -> true
-                other !is Array -> false
-                else -> {
-                    val it1 = iterator()
-                    val it2 = other.iterator()
-                    while (it1.hasNext()) {
-                        val e1 = it1.next()
-                        val e2 = it2.next()
-                        if (e1 != e2) return false
-                    }
-                    return true
-                }
-                
-            }
-        }
+        override fun equals(other: Any?): Boolean = other is Array && lst == other.lst
 
         override fun hashCode(): Int {
             return lst.hashCode()

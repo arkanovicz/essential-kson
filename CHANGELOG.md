@@ -1,3 +1,7 @@
+# v2.15
+
++ fix: `Json.Array.equals()` crashed on a shorter array and returned true for a longer one with a matching prefix
+
 # v2.14
 
 + new: `allowBigNumbers` parameter for `Json.parse()` and `Json.parseValue()` — when `false`, all numbers are parsed as Long or Double instead of BigInteger/BigDecimal

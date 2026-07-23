@@ -41,12 +41,12 @@ Using Maven:
     <dependency>
         <groupId>com.republicate.kson</groupId>
         <artifactId>essential-kson</artifactId>
-        <version>2.14</version>
+        <version>2.15</version>
     </dependency>
 
 Using Gradle:
 
-    implementation 'com.republicate.kson:essential-kson:2.14'
+    implementation 'com.republicate.kson:essential-kson:2.15'
 
 ### Parsing JSON
 
