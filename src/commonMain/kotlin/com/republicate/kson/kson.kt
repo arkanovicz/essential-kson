@@ -1471,12 +1471,13 @@ interface Json {
             number =
                     if (!decimal && fitsInLong && (negative || negValue != Long.MIN_VALUE) && (!negative || negValue != 0L)) {
                         if (negative) negValue else -negValue
+                    } else if (decimal && fitsInDouble) {
+                        val fast = fastDoubleValue()
+                        if (fast.isNaN()) numBuf.concatToString(0, numLen).toDouble() else fast
                     } else {
                         val strBuff = numBuf.concatToString(0, numLen)
                         if (!decimal) {
                             if (allowBigNumbers) BigInteger.parseString(strBuff) else strBuff.toDouble()
-                        } else if (fitsInDouble) {
-                            strBuff.toDouble()
                         } else {
                             if (allowBigNumbers) BigDecimal.parseString(strBuff) else strBuff.toDouble()
                         }
@@ -1484,6 +1485,51 @@ interface Json {
             // we always end up reading one more character
             back()
             return number
+        }
+
+        // re-reads the token from numBuf as (sign, mantissa, decimal exponent);
+        // fitsInDouble guarantees at most 15 significant digits, so the mantissa fits a Long
+        private fun fastDoubleValue(): Double {
+            var i = 0
+            var negative = false
+            if (numBuf[0] == '-') {
+                negative = true
+                i = 1
+            }
+            var w = 0L
+            var q = 0
+            while (i < numLen) {
+                val c = numBuf[i]
+                if (c !in '0'..'9') break
+                w = w * 10 + (c - '0')
+                ++i
+            }
+            if (i < numLen && numBuf[i] == '.') {
+                val fracStart = ++i
+                while (i < numLen) {
+                    val c = numBuf[i]
+                    if (c !in '0'..'9') break
+                    w = w * 10 + (c - '0')
+                    ++i
+                }
+                q = fracStart - i
+            }
+            if (i < numLen) { // 'e' or 'E'
+                ++i
+                var expNegative = false
+                val c = numBuf[i]
+                if (c == '+' || c == '-') {
+                    expNegative = c == '-'
+                    ++i
+                }
+                var e = 0
+                while (i < numLen) {
+                    e = e * 10 + (numBuf[i] - '0')
+                    ++i
+                }
+                q += if (expNegative) -e else e
+            }
+            return FastDouble.parse(negative, w, q)
         }
 
         @Throws(JsonException::class)

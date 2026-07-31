@@ -36,6 +36,8 @@ open class ParseBenchmark {
     @Benchmark fun strings_jackson(): Any? = jackson.readTree(strings)
 
     @Benchmark fun numbers_kson(): Any? = Json.parse(numbers)
+    // 16+ digit decimals as Double (like Jackson's readTree) instead of exact BigDecimal
+    @Benchmark fun numbers_kson_nobig(): Any? = Json.parse(numbers, allowBigNumbers = false)
     @Benchmark fun numbers_gson(): Any? = JsonParser.parseString(numbers)
     @Benchmark fun numbers_jackson(): Any? = jackson.readTree(numbers)
 }
