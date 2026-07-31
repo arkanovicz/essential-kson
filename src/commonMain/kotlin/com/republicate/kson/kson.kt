@@ -1081,48 +1081,89 @@ interface Json {
 
     /**
      * JSON parser.
+     *
+     * Scans a sliding CharArray window: string sources are bulk-copied into it chunk
+     * by chunk (bounded memory), stream sources refill it from Input. Line and column
+     * are only computed when an error or warning is actually emitted.
      */
-    private class Parser(val input: Input, val allowBigNumbers: Boolean = true) {
+    private class Parser private constructor(
+        private val str: String?,
+        private val input: Input?,
+        private val allowBigNumbers: Boolean
+    ) {
 
-        constructor (source : String, allowBigNumbers: Boolean = true): this(StringInput(source), allowBigNumbers)
+        constructor(source: String, allowBigNumbers: Boolean = true) : this(source, null, allowBigNumbers)
+        constructor(input: Input, allowBigNumbers: Boolean = true) : this(null, input, allowBigNumbers)
 
         companion object {
             const val MIN_LONG_DECILE = Long.MIN_VALUE / 10
             const val EOF = (-1).toChar()
+            const val WINDOW = 8192
+            const val STREAM_WINDOW = 1024
         }
 
-        private var row = 1
-        private var col = 0
-        private var ch : Char = 0.toChar()
-        private var prefetch = false
-        private var prefetched : Char = 0.toChar()
-        private val buffer = CharArray(1024)
-        private var pos = 0
+        private val buf = CharArray(if (str != null) minOf(str.length, WINDOW) else STREAM_WINDOW)
+        private var pos = 0        // cursor within buf
+        private var limit = 0      // valid chars in buf
+        private var strPos = 0     // consumed chars of str
+        private var ch: Char = 0.toChar()
 
-        @Throws(JsonException::class)
-        private operator fun next(): Char {
-            if (prefetch) {
-                ch = prefetched
-                prefetch = false
-            } else {
-                ch = input.read()
-                if (ch == '\n') {
-                    ++row
-                    col = 0
-                } else {
-                    ++col
+        // stream sources: newlines of consumed windows, accounted at refill
+        private var absBase = 0    // absolute offset of buf[0]
+        private var rowsBefore = 0
+        private var lastNlAbs = -1
+
+        // number token accumulator
+        private val numBuf = CharArray(1024)
+        private var numLen = 0
+
+        private fun fill(): Boolean {
+            if (str != null) {
+                pos = 0
+                val n = minOf(buf.size, str.length - strPos)
+                if (n == 0) {
+                    absBase = str.length
+                    limit = 0
+                    return false
+                }
+                str.toCharArray(buf, 0, strPos, strPos + n)
+                absBase = strPos
+                strPos += n
+                limit = n
+                return true
+            }
+            for (i in 0 until limit) {
+                if (buf[i] == '\n') {
+                    ++rowsBefore
+                    lastNlAbs = absBase + i
                 }
             }
+            absBase += limit
+            pos = 0
+            limit = 0
+            var n = 0
+            while (n < buf.size) {
+                val c = input!!.read()
+                if (c == EOF) break
+                buf[n++] = c
+            }
+            if (n == 0) return false
+            limit = n
+            return true
+        }
+
+        private operator fun next(): Char {
+            if (pos >= limit && !fill()) {
+                ch = EOF
+                return EOF
+            }
+            ch = buf[pos++]
             return ch
         }
 
-        @Throws(JsonException::class)
+        // one-char pushback; the char just read always lies within the current window
         private fun back() {
-            if (prefetch) {
-                throw error("internal error: cannot go back twice")
-            }
-            prefetch = true
-            prefetched = ch
+            if (ch != EOF) --pos
         }
 
         @Throws(JsonException::class)
@@ -1145,14 +1186,52 @@ interface Json {
             return ret
         }
 
-        @Throws(JsonException::class)
         private fun skipWhiteSpace() {
-            while (next().isWhitespace()) {
+            while (true) {
+                while (pos < limit) {
+                    val c = buf[pos++]
+                    if (c != ' ' && c != '\t' && c != '\n' && c != '\r') {
+                        ch = c
+                        return
+                    }
+                }
+                if (!fill()) {
+                    ch = EOF
+                    return
+                }
             }
         }
 
+        private fun location(): String {
+            var abs = absBase + pos - 1
+            var rows: Int
+            var lastNl: Int
+            if (str != null) {
+                if (abs >= str.length) abs = str.length - 1
+                rows = 0
+                lastNl = -1
+                for (i in 0..abs) {
+                    if (str[i] == '\n') {
+                        ++rows
+                        lastNl = i
+                    }
+                }
+            } else {
+                rows = rowsBefore
+                lastNl = lastNlAbs
+                val end = minOf(pos, limit)
+                for (i in 0 until end) {
+                    if (buf[i] == '\n') {
+                        ++rows
+                        lastNl = absBase + i
+                    }
+                }
+            }
+            return "line ${rows + 1}, column ${abs - lastNl}"
+        }
+
         private fun error(message: String): JsonException {
-            val msg = "JSON parsing error at line $row, column $col: $message"
+            val msg = "JSON parsing error at ${location()}: $message"
             logger.error { msg }
             return JsonException(msg)
         }
@@ -1196,7 +1275,7 @@ interface Json {
                     if (ch != ':') throw error("expecting ':', got: '" + display(ch) + "'")
                     val value = parseValue()
                     val previous = ret.put(key, value)
-                    if (previous != null) logger.warn { "key '$key' is not unique at line $row, column $col" }
+                    if (previous != null) logger.warn { "key '$key' is not unique at ${location()}" }
                     skipWhiteSpace()
                     when (ch) {
                         '}' -> break@main
@@ -1248,45 +1327,40 @@ interface Json {
 
         @Throws(JsonException::class)
         private fun parseString(): String {
-            // borrow some optimization ideas from com.google.gson.stream.JsonReader
-            pos = 0
             var builder: StringBuilder? = null
+            var start = pos
             while (true) {
-                while (pos < buffer.size) {
-                    buffer[pos++] = next()
-                    when {
-                        ch == '"' -> return builder?.appendRange(buffer, 0, pos - 1)?.toString() ?: buffer.concatToString(0, pos - 1)
-                        ch == '\\' -> {
-                            if (builder == null) {
-                                builder = StringBuilder(max(2 * pos, 16))
+                if (pos >= limit) {
+                    if (builder == null) builder = StringBuilder(max(2 * (limit - start), 16))
+                    builder.appendRange(buf, start, limit)
+                    if (!fill()) throw error("unterminated string")
+                    start = 0
+                }
+                val c = buf[pos++]
+                when {
+                    c == '"' -> return builder?.appendRange(buf, start, pos - 1)?.toString()
+                        ?: buf.concatToString(start, pos - 1)
+                    c == '\\' -> {
+                        if (builder == null) builder = StringBuilder(max(2 * (pos - start), 16))
+                        builder.appendRange(buf, start, pos - 1)
+                        var e = parseEscapeSequence()
+                        builder.append(e)
+                        if (e.isHighSurrogate()) {
+                            if (next() != '\\') {
+                                throw error("low surrogate escape sequence expected")
                             }
-                            builder.appendRange(buffer, 0, pos - 1)
-                            pos = 0
-                            var c = parseEscapeSequence()
-                            builder.append(c)
-                            if (c.isHighSurrogate()) {
-                                ch = next()
-                                if (ch != '\\') {
-                                    throw error("low surrogate escape sequence expected")
-                                }
-                                c = parseEscapeSequence()
-                                builder.append(c)
-                                if (!c.isLowSurrogate()) {
-                                    throw error("low surrogate escape sequence expected")
-                                }
-                            } else if (c.isLowSurrogate()) {
-                                throw error("lone low surrogate escape sequence unexpected")
+                            e = parseEscapeSequence()
+                            builder.append(e)
+                            if (!e.isLowSurrogate()) {
+                                throw error("low surrogate escape sequence expected")
                             }
+                        } else if (e.isLowSurrogate()) {
+                            throw error("lone low surrogate escape sequence unexpected")
                         }
-                        ch == EOF -> throw error("unterminated string")
-                        ch < ' ' -> throw error("unescaped control character")
+                        start = pos
                     }
+                    c < ' ' -> throw error("unescaped control character")
                 }
-                if (builder == null) {
-                    builder = StringBuilder(max(2 * pos, 16))
-                }
-                builder.appendRange(buffer, 0, pos)
-                pos = 0
             }
         }
 
@@ -1329,7 +1403,7 @@ interface Json {
             // inspired from com.google.gson.stream.JsonReader, but much more readable
             // and handle Double/BigDecimal alternatives
             val number: Any
-            pos = 0
+            numLen = 0
             var digits = 0
             var negative = false
             var decimal = false
@@ -1339,7 +1413,7 @@ interface Json {
             // sign
             if (ch == '-') {
                 negative = true
-                buffer[pos++] = ch
+                numBuf[numLen++] = ch
                 if (next() == EOF) {
                     throw error("malformed number")
                 }
@@ -1349,7 +1423,7 @@ interface Json {
             // fractional part
             if (ch == '.') {
                 decimal = true
-                buffer[pos++] = ch
+                numBuf[numLen++] = ch
                 if (next() == EOF) {
                     throw error("malformed number")
                 }
@@ -1357,9 +1431,9 @@ interface Json {
             } else if (ch != 'e' && ch != 'E') {
                 // check if number fits in long
                 var i = if (negative) 1 else 0
-                negValue = -(buffer[i++] - '0').toLong()
-                while (i < pos) {
-                    val newNegValue = negValue * 10 - (buffer[i] - '0')
+                negValue = -(numBuf[i++] - '0').toLong()
+                while (i < numLen) {
+                    val newNegValue = negValue * 10 - (numBuf[i] - '0')
                     fitsInLong = fitsInLong and (negValue > MIN_LONG_DECILE
                             || negValue == MIN_LONG_DECILE && newNegValue < negValue)
                     if (!fitsInLong) {
@@ -1375,22 +1449,22 @@ interface Json {
             // exponent
             if (ch == 'e' || ch == 'E') {
                 decimal = true
-                buffer[pos++] = ch
+                numBuf[numLen++] = ch
                 if (next() == EOF) {
                     throw error("malformed number")
                 }
-                if (pos == buffer.size) {
+                if (numLen == numBuf.size) {
                     throw error("number is too long at my taste")
                 }
                 if (ch == '+' || ch == '-') {
-                    buffer[pos++] = ch
+                    numBuf[numLen++] = ch
                     if (next() == EOF) {
                         throw error("malformed number")
                     }
                 }
-                val expPos = pos
+                val expPos = numLen
                 val expDigits = readDigits(true) // or false ?
-                if (fitsInDouble && expDigits >= 3 && (expDigits > 3 || buffer[expPos] > '3' || buffer[expPos + 1] > '0' || buffer[expPos + 2] > '7')) {
+                if (fitsInDouble && expDigits >= 3 && (expDigits > 3 || numBuf[expPos] > '3' || numBuf[expPos + 1] > '0' || numBuf[expPos + 2] > '7')) {
                     fitsInDouble = false
                 }
             }
@@ -1398,7 +1472,7 @@ interface Json {
                     if (!decimal && fitsInLong && (negative || negValue != Long.MIN_VALUE) && (!negative || negValue != 0L)) {
                         if (negative) negValue else -negValue
                     } else {
-                        val strBuff = buffer.concatToString(0, pos)
+                        val strBuff = numBuf.concatToString(0, numLen)
                         if (!decimal) {
                             if (allowBigNumbers) BigInteger.parseString(strBuff) else strBuff.toDouble()
                         } else if (fitsInDouble) {
@@ -1415,18 +1489,18 @@ interface Json {
         @Throws(JsonException::class)
         private fun readDigits(zeroFirstAllowed: Boolean): Int {
             var len = 0
-            while (pos < buffer.size) {
-                if (!ch.isDigit()) {
+            while (numLen < numBuf.size) {
+                if (ch !in '0'..'9') {
                     break
                 }
-                buffer[pos++] = ch
+                numBuf[numLen++] = ch
                 ++len
                 next()
             }
-            if (pos == buffer.size) {
+            if (numLen == numBuf.size) {
                 throw error("number is too long at my taste")
             }
-            if (len == 0 || !zeroFirstAllowed && len > 1 && buffer[pos - len] == '0') {
+            if (len == 0 || !zeroFirstAllowed && len > 1 && numBuf[numLen - len] == '0') {
                 throw error("malformed number")
             }
             return len

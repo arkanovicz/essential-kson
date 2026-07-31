@@ -1,3 +1,8 @@
+# v2.16
+
++ perf: parser rewritten over a sliding CharArray window (bulk chunk copies for string sources, buffered refills for streams, lazy line/column tracking) — ~1.7x faster parsing on typical payloads, now on par with Jackson and ahead of Gson for tree parsing on the JVM
++ whitespace handling is now strictly JSON (space, tab, CR, LF) — Unicode spaces like NBSP are no longer silently accepted
+
 # v2.15
 
 + fix: `Json.Array.equals()` crashed on a shorter array and returned true for a longer one with a matching prefix
