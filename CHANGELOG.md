@@ -1,5 +1,6 @@
 # v2.16
 
++ new: standalone JMH benchmark harness under `benchmark/` (kson vs Gson vs Jackson tree parsing; `cd benchmark && ../gradlew jmh`)
 + perf: parser rewritten over a sliding CharArray window (bulk chunk copies for string sources, buffered refills for streams, lazy line/column tracking) — ~1.7x faster parsing on typical payloads, now on par with Jackson and ahead of Gson for tree parsing on the JVM
 + whitespace handling is now strictly JSON (space, tab, CR, LF) — Unicode spaces like NBSP are no longer silently accepted
 + fix: JVM/Android consumers without slf4j-api on their classpath crashed with NoClassDefFoundError at first use (kotlin-logging-jvm declares it compileOnly); slf4j-api is now a runtime dependency
