@@ -105,11 +105,21 @@ kotlin {
                 // implementation(libs.ktor)
             }
         }
-        val jvmMain by getting
+        val jvmMain by getting {
+            dependencies {
+                // kotlin-logging-jvm declares slf4j-api compileOnly; without it consumers crash at first use
+                implementation(libs.slf4j.api)
+            }
+        }
         val jvmTest by getting {
             dependencies {
                 implementation(kotlin("test-junit"))
                 runtimeOnly(libs.slf4j)
+            }
+        }
+        val androidMain by getting {
+            dependencies {
+                implementation(libs.slf4j.api)
             }
         }
         val androidUnitTest by getting {
