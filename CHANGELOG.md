@@ -6,6 +6,7 @@
 + whitespace handling is now strictly JSON (space, tab, CR, LF) — Unicode spaces like NBSP are no longer silently accepted
 + fix: JVM/Android consumers without slf4j-api on their classpath crashed with NoClassDefFoundError at first use (kotlin-logging-jvm declares it compileOnly); slf4j-api is now a runtime dependency
 + fix: `Json.Object.equals()` is order-insensitive, as the `Map` contract requires (insertion order is still kept for iteration and serialization)
++ change: `equals()` and `hashCode()` compare numbers by value whatever their class, as Gson does: a written `1` equals a parsed `1` (and `1.0`), a `Float` compares through its shortest decimal form so `0.1f` equals `0.1`; storage is untouched, values keep the class they were given
 
 # v2.15
 

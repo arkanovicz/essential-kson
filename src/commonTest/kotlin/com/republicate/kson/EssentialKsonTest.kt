@@ -782,6 +782,49 @@ class EssentialJsonTest : BaseTestUnit()
         assertNotEquals<Json.Object>(ab, Json.Object("a" to 1L))
     }
 
+    private fun assertSameValue(expected: Json?, actual: Json?) {
+        assertEquals(expected, actual)
+        assertEquals(actual, expected)
+        assertEquals(expected.hashCode(), actual.hashCode())
+    }
+
+    @Test
+    fun testNumberValueEquality() = runTest {
+        val parsed = Json.parse("""{"n":1}""")
+        assertSameValue(parsed, Json.Object("n" to 1))
+        assertSameValue(parsed, Json.Object("n" to 1.toShort()))
+        assertSameValue(parsed, Json.Object("n" to 1.toByte()))
+        assertSameValue(parsed, Json.Object("n" to 1.0))
+        assertSameValue(parsed, Json.Object("n" to 1.0f))
+        assertSameValue(parsed, Json.parse("""{"n":1.0}"""))
+        assertSameValue(parsed, Json.MutableObject().apply { put("n", 1) })
+        assertSameValue(parsed, obj { "n" to 1 })
+        assertEquals(1, Json.Object("n" to 1)["n"]) // storage is untouched
+        assertEquals(1L, (parsed as Json.Object)["n"])
+
+        assertSameValue(Json.parse("""{"n":1.5}"""), Json.Object("n" to 1.5f))
+        assertSameValue(Json.parse("""{"n":0.1}"""), Json.Object("n" to 0.1f))
+        assertSameValue(Json.parse("""{"n":0}"""), Json.Object("n" to -0.0))
+
+        val array = Json.parse("""[1,2,3]""")
+        assertSameValue(array, Json.Array(1, 2, 3))
+        assertSameValue(array, Json.Array(1L, 2.0, 3.0f))
+        assertSameValue(array, Json.MutableArray().apply { add(1); add(2); add(3) })
+        assertSameValue(array, arr[1, 2, 3])
+
+        val nested = Json.parse("""{"a":[1,{"b":2}]}""")
+        assertSameValue(nested, Json.Object("a" to Json.Array(1, Json.Object("b" to 2))))
+        assertSameValue(nested, nested?.copy())
+
+        assertNotEquals<Json?>(parsed, Json.Object("n" to 2))
+        assertNotEquals<Json?>(parsed, Json.Object("n" to 1.5))
+        assertNotEquals<Json?>(parsed, Json.Object("n" to "1"))
+        assertNotEquals<Json?>(parsed, Json.Object("n" to null))
+        assertNotEquals<Json?>(Json.Object("n" to null), Json.Object("m" to null))
+        assertNotEquals<Json?>(Json.Array(Long.MAX_VALUE), Json.Array(Long.MAX_VALUE - 1)) // no Double detour between integrals
+        assertNotEquals<Json?>(Json.Array(1), Json.Array(1, 1))
+    }
+
     @Test
     fun testEqualsString() = runTest {
         val payload = "{\"access_token\":\"MWJkNjA5NjItYzhmOS00OTkwLWFhZmEtOGQ4OTEyZDk4ZmJh\",\"token_type\":\"Bearer\",\"expires_in\":1800,\"scope\":\"openid profile\",\"refresh_token\":\"YWVmOGJjZjYtMzhlYi00YmM3LTg1NzQtNWMzOTY0NmY1MGUz\",\"id_token\":\"eyJjaWQiOiJydHIiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJhcHAuZGV2LnJ0cmV4cGVyaWVuY2Uub3JnIiwiYXVkIjoiQ2hhbmNlIiwic3ViIjoiZjViN2I1MWMtNjM4Yi0xMWVhLWJjOTYtYTRiZjAxMWRkNDg0IiwibmFtZSI6InRhbGVudF9jbGF1ZGUiLCJlbWFpbCI6ImNsYXVkZTJAcmVuZWdhdC5uZXQiLCJnaXZlbl9uYW1lIjoiQ2xhdWRlIiwiZmFtaWx5X25hbWUiOiJCcmlzc29uIiwiaWF0IjoxNTg0MjQ5MjI0LCJleHAiOjE1ODQyNDkyMjZ9.e2pgWxKe_1ZaUr06QPre65zqyOBzTDez16G4OE-OFBP-Dry2UAFISCAdX85jqqw0EjzJy-X8I5Ho7jD5hD2qeXtlT3Ee3oI2GdekW_sNpC1AhzwItfcdHhh7fIddaViOtpQbe11V7PDS0bcJsAc99SsR_kFIOwQi9T_xPmXoQyMN3bkHB-Ydty3jLKSINx-o7Dg7sFLwCNe1xpIHV5OwuzxiVBYW9Y_QpngtXqpwlBSDrq38WR-Y2w1IYZi2hUva9V5f8nezWM5fmXYe3DdRCa608w-AchWDGm7o-E7YJtNnKms57D1hYFIFJCKRPZsoBpGT0cVLPAcR7zCa4btKDJfRB2_B-u-vIn7lpSbuHBYF-SIzcJ5DP-rt-x1ritRFXnpxwqehvOEggG_l0nWHy6Tbl5uN2lsNrxAsDyIlvfrjw6BQJzQxfXNmrfXATjaGhFLVwl-pzsQa0N4Ullkv_5IQ6HUepQXwT_s-4VZlBXidcCJ0ypLo9n4JAxL-juTpgRCu2TAK4sIEajvXTt0UckHFV11oUXKA2Jz_V3XmmKzv1inn6uvYvi0bxm7zhGIqWSXKsDF4wnL-IsZ6-Ck7sSE9cUo54sListdz2mv9yrsD8R3P1PRyNiUqpMFBQn4LYm9vTvcozhOk4IbnSI2XjixeKBfrDWXrnSMCnyEAB@4\"}"

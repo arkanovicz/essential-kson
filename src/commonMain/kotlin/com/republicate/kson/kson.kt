@@ -48,6 +48,25 @@ fun Char.isISOControl() : Boolean {
 
 fun Char.isDigit() : Boolean = this in '0'..'9'
 
+// Values compare by number, not by class, so a written 1 equals a parsed 1 (as in Gson, unlike Jackson):
+// two integral numbers as Long, anything else as Double, a Float through its shortest decimal form (0.1f is 0.1).
+// Hashes go through the same Double so that equal values hash equal.
+// On JS every number passes `is Int`, hence the value check behind the class check.
+private fun isIntegral(n: Number) = n is Long || (n is Int || n is Short || n is Byte) && n.toDouble() % 1.0 == 0.0
+
+private fun Number.toDecimal(): Double = if (this is Float && isFinite()) toString().toDouble() else toDouble()
+
+internal fun valueEquals(a: Any?, b: Any?): Boolean = when {
+    a is Number && b is Number -> if (isIntegral(a) && isIntegral(b)) a.toLong() == b.toLong() else a.toDecimal() == b.toDecimal()
+    else -> a == b
+}
+
+internal fun valueHash(v: Any?): Int = when (v) {
+    null -> 0
+    is Number -> v.toDecimal().let { if (it == 0.0) 0.0 else it }.hashCode() // -0.0 == 0.0
+    else -> v.hashCode()
+}
+
 class JsonException(message: String?, cause: Throwable? = null) : Exception(message, cause)
 
 /*****************************************************************
@@ -582,11 +601,16 @@ interface Json {
             if (v is Json) v.copy() else v
         }
 
-        override fun equals(other: Any?): Boolean = other is Array && lst == other.lst
-
-        override fun hashCode(): Int {
-            return lst.hashCode()
+        override fun equals(other: Any?): Boolean {
+            if (other === this) return true
+            if (other !is Array || other.size != size) return false
+            val it1 = lst.iterator()
+            val it2 = other.lst.iterator()
+            while (it1.hasNext()) if (!valueEquals(it1.next(), it2.next())) return false
+            return true
         }
+
+        override fun hashCode(): Int = lst.fold(1) { h, v -> 31 * h + valueHash(v) }
     }
 
     @Suppress("DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE", "UNUSED_PARAMETER")
@@ -929,11 +953,18 @@ interface Json {
             if (value is Json) value.copy() else value
         }
 
-        override fun equals(other: Any?): Boolean = other === this || other is Object && map == other.map
-
-        override fun hashCode(): Int {
-            return map.hashCode()
+        override fun equals(other: Any?): Boolean {
+            if (other === this) return true
+            if (other !is Object || other.size != size) return false
+            for ((key, value) in map) {
+                val otherValue = other.map[key]
+                if (otherValue == null && !other.map.containsKey(key)) return false
+                if (!valueEquals(value, otherValue)) return false
+            }
+            return true
         }
+
+        override fun hashCode(): Int = map.entries.sumOf { it.key.hashCode() xor valueHash(it.value) }
 
     }
 

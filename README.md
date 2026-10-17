@@ -33,7 +33,7 @@ Here is the list of currently supported targets:
 The `com.republicate.kson.Json` interface is implemented by its two inner classes `Json.Array` and `Json.Object`, which are in turn inherited with `Json.MutableArray` and`Json.MutableObject`.
 
 `Json.Array` extends `List<Any?>` and `Json.Object` extends `Map<String, Any?>`.
-Objects compare as maps, regardless of key order.
+Objects compare as maps, regardless of key order, and numbers compare by value whatever their class (`1`, `1L` and `1.0` are equal, `0.1f` equals `0.1`), so written and parsed values compare equal.
 
 ### Inclusion in your project
 
