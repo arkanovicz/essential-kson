@@ -929,20 +929,7 @@ interface Json {
             if (value is Json) value.copy() else value
         }
 
-        override fun equals(other: Any?): Boolean {
-            if (other == null) return false
-            if (other === this) return true
-            if (other !is Object) return false
-            if (other.size != size) return false
-            val it1 = entries.iterator()
-            val it2 = other.entries.iterator()
-            while (it1.hasNext()) {
-                val e1 = it1.next()
-                val e2 = it2.next()
-                if (e1 != e2) return false
-            }
-            return true
-        }
+        override fun equals(other: Any?): Boolean = other === this || other is Object && map == other.map
 
         override fun hashCode(): Int {
             return map.hashCode()
