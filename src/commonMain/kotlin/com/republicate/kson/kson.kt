@@ -1093,7 +1093,7 @@ interface Json {
             ESCAPED_CHARS['\b'.code] = "\\b"
             ESCAPED_CHARS['\n'.code] = "\\n"
             ESCAPED_CHARS['\r'.code] = "\\r"
-            // ESCAPED_CHARS['\f'.toInt()] = "\\f" // No form feed in kotlin
+            ESCAPED_CHARS['\u000C'.code] = "\\f" // kotlin has no '\f' literal
         }
     }
 
@@ -1407,7 +1407,7 @@ interface Json {
                 't' -> '\t'
                 'b' -> '\b'
                 'n' -> '\n'
-                // 'f' -> '\f' // no form feed in kotlin
+                'f' -> '\u000C' // kotlin has no '\f' literal
                 'r' -> '\r'
                 '"' -> '"'
                 '\\' -> '\\'

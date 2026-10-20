@@ -1,3 +1,7 @@
+# v2.17
+
++ fix: the `\f` escape was rejected by the parser and never emitted by the serializer (form feed was written as `\u000c`), a leftover of the 2020 port from essential-json where the Kotlin `'\f'` literal does not exist
+
 # v2.16
 
 + new: standalone JMH benchmark harness under `benchmark/` (kson vs Gson vs Jackson tree parsing; `cd benchmark && ../gradlew jmh`)

@@ -619,8 +619,6 @@ class EssentialJsonTest : BaseTestUnit()
 
         val skipByFilename = mutableSetOf(
             "nst_files/n_223.json", // \u0000 is valid
-            "test_parsing/n_structure_whitespace_formfeed.json", // form feed should be valid
-            "test_parsing/y_string_allowed_escapes.json", // no form feed in kotlin
             "test_parsing/y_string_nonCharacterInUTF-8_U+FFFF.json" // why should it be successful?!
         ).apply {
             if (Platform.native() || Platform.wasm()) {
