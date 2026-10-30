@@ -1,27 +1,32 @@
 @file:OptIn(ExperimentalKotlinGradlePluginApi::class)
 
-import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.dokka)
-    `maven-publish`
-    alias(libs.plugins.nexusPublish)
+    alias(libs.plugins.mavenPublish)
     signing
     alias(libs.plugins.versions)
 }
 
 group = "com.republicate.kson"
-version = "2.17"
+version = "2.18"
 
 kotlin {
 
-    applyDefaultHierarchyTemplate()
+    applyDefaultHierarchyTemplate {
+        common {
+            group("jvmCommon") {
+                withCompilations { it.platformType == KotlinPlatformType.jvm || it.platformType == KotlinPlatformType.androidJvm }
+            }
+        }
+    }
 
     jvmToolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
@@ -37,11 +42,14 @@ kotlin {
             jvmTarget = JvmTarget.JVM_17
         }
     }
-    androidTarget {
+    android {
+        namespace = "com.republicate.kson"
+        compileSdk = 35
+        minSdk = 21
         compilerOptions {
-            jvmTarget = JvmTarget.JVM_17
+            jvmTarget.set(JvmTarget.JVM_17)
         }
-        publishLibraryVariants("release")
+        withHostTest { }
     }
     js {
         browser {
@@ -57,7 +65,11 @@ kotlin {
                 }
             }
         }
-        nodejs()
+        nodejs {
+            testTask {
+                useMocha { timeout = "10s" }  // increase 2s default, flaky
+            }
+        }
     }
     iosX64()
     iosArm64()
@@ -73,9 +85,7 @@ kotlin {
     tvosArm64()
     tvosSimulatorArm64()
     tvosX64()
-    // watchosArm32()
     watchosArm64()
-    // watchosDeviceArm64()
     watchosX64()
     watchosSimulatorArm64()
     mingwX64()
@@ -105,24 +115,13 @@ kotlin {
                 // implementation(libs.ktor)
             }
         }
-        val jvmMain by getting {
+        val jvmCommonMain by getting {
             dependencies {
                 // kotlin-logging-jvm declares slf4j-api compileOnly; without it consumers crash at first use
                 implementation(libs.slf4j.api)
             }
         }
-        val jvmTest by getting {
-            dependencies {
-                implementation(kotlin("test-junit"))
-                runtimeOnly(libs.slf4j)
-            }
-        }
-        val androidMain by getting {
-            dependencies {
-                implementation(libs.slf4j.api)
-            }
-        }
-        val androidUnitTest by getting {
+        val jvmCommonTest by getting {
             dependencies {
                 implementation(kotlin("test-junit"))
                 runtimeOnly(libs.slf4j)
@@ -135,9 +134,7 @@ kotlin {
             }
         }
         val jsMain by getting
-        val jsTest by getting {
-            kotlin.srcDir(layout.buildDirectory.dir("generated/jsTest/kotlin"))
-        }
+        val jsTest by getting
         val wasmJsMain by getting
         val wasmJsTest by getting
         val wasmWasiTest by getting {
@@ -159,56 +156,10 @@ kotlin {
     }
 }
 
-android {
-    namespace = "com.republicate.kson"
-    compileSdk = 35
-    defaultConfig {
-        minSdk = 21
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    sourceSets {
-        getByName("test") {
-            resources.srcDir("src/commonTest/resources")
-        }
-    }
-}
-
 tasks {
-    register<Jar>("dokkaJar") {
-        from(dokkaHtml)
-        dependsOn(dokkaHtml)
-        archiveClassifier.set("javadoc")
-    }
-    withType<DokkaTask>().configureEach {
-        notCompatibleWithConfigurationCache("https://github.com/Kotlin/dokka/issues/2231")
-    }
-
-    // Generate BuildConfig with project path for jsTest
-    val generateJsTestBuildConfig by registering {
-        val projectRoot = layout.projectDirectory.asFile.absolutePath.replace("\\", "/")
-        val outputDir = layout.buildDirectory.dir("generated/jsTest/kotlin")
-        outputs.dir(outputDir)
-        doLast {
-            val dir = outputDir.get().asFile.resolve("com/republicate/kson")
-            dir.mkdirs()
-            dir.resolve("BuildConfig.kt").writeText("""
-                package com.republicate.kson
-
-                object BuildConfig {
-                    const val PROJECT_ROOT = "$projectRoot"
-                }
-            """.trimIndent())
-        }
-    }
-
-    named("compileTestKotlinJs") {
-        dependsOn(generateJsTestBuildConfig)
-    }
-
-    // Patch wasmWasi test runner to add filesystem preopens
+    // The compiler-emitted WASI runner preopens nothing, so the tests see no filesystem. No KGP hook exists;
+    // Kotlin 2.4.20 adds `wasmWasi { wasmtime() }` (KT-86633), whose runtime takes preopens as `--dir` arguments:
+    // check whether its test task exposes them, then drop this patch.
     val patchWasmWasiTestRunner by registering {
         dependsOn("compileTestDevelopmentExecutableKotlinWasmWasi")
         // Capture project root at configuration time for configuration cache compatibility
@@ -231,80 +182,35 @@ tasks {
     }
 }
 
+mavenPublishing {
+    publishToMavenCentral(automaticRelease = true)
+    signAllPublications()
+    pom {
+        name.set("essential-kson")
+        description.set("essential-kson $version - Lightweight JSON library for Kotlin")
+        url.set("https://github.com/arkanovicz/essential-kson")
+        licenses {
+            license {
+                name.set("The Apache Software License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+        developers {
+            developer {
+                id.set("cbrisson")
+                name.set("Claude Brisson")
+                email.set("claude.brisson@gmail.com")
+                organization.set("republicate.com")
+                organizationUrl.set("https://republicate.com")
+            }
+        }
+        scm {
+            connection.set("scm:git@github.com:arkanovicz/essential-kson.git")
+            url.set("https://github.com/arkanovicz/essential-kson")
+        }
+    }
+}
+
 signing {
     useGpgCmd()
-    sign(publishing.publications)
-}
-
-afterEvaluate {
-    publishing {
-        publications.withType<MavenPublication> {
-            pom {
-                name.set("essential-kson")
-                description.set("essential-kson $version - Lightweight JSON library for Kotlin")
-                url.set("https://github.com/arkanovicz/essential-kson")
-                licenses {
-                    license {
-                        name.set("The Apache Software License, Version 2.0")
-                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-                    }
-                }
-                developers {
-                    developer {
-                        id.set("cbrisson")
-                        name.set("Claude Brisson")
-                        email.set("claude.brisson@gmail.com")
-                        organization.set("republicate.com")
-                        organizationUrl.set("https://republicate.com")
-                    }
-                }
-                scm {
-                    connection.set("scm:git@github.com:arkanovicz/essential-kson.git")
-                    url.set("https://github.com/arkanovicz/essential-kson")
-                }
-            }
-            // Task ':publish<platform>PublicationToMavenLocal' uses this output of task ':sign<platform>Publication' without declaring an explicit or implicit dependency.
-            // => generate dokkaJar tasks for each platform, instead of declaring: artifact(tasks["dokkaJar"])
-            val dokkaJar = project.tasks.register("${name}DokkaJar", Jar::class) {
-                group = JavaBasePlugin.DOCUMENTATION_GROUP
-                description = "Assembles Kotlin docs with Dokka into a Javadoc jar"
-                archiveClassifier.set("javadoc")
-                from(tasks.named("dokkaHtml"))
-
-                // Each archive name should be distinct, to avoid implicit dependency issues.
-                // We use the same format as the sources Jar tasks.
-                // https://youtrack.jetbrains.com/issue/KT-46466
-                archiveBaseName.set("${archiveBaseName.get()}-${name}")
-            }
-            artifact(dokkaJar)
-        }
-    }
-}
-
-nexusPublishing {
-    repositories {
-        sonatype {
-            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
-            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
-            useStaging.set(true)
-        }
-    }
-}
-
-// Resolves issues with .asc task output of the sign task of native targets.
-// See: https://github.com/gradle/gradle/issues/26132
-// And: https://youtrack.jetbrains.com/issue/KT-46466
-tasks.withType<Sign>().configureEach {
-    val pubName = name.removePrefix("sign").removeSuffix("Publication")
-
-    // These tasks only exist for native targets, hence findByName() to avoid trying to find them for other targets
-
-    // Task ':linkDebugTest<platform>' uses this output of task ':sign<platform>Publication' without declaring an explicit or implicit dependency
-    tasks.findByName("linkDebugTest$pubName")?.let {
-        mustRunAfter(it)
-    }
-    // Task ':compileTestKotlin<platform>' uses this output of task ':sign<platform>Publication' without declaring an explicit or implicit dependency
-    tasks.findByName("compileTestKotlin$pubName")?.let {
-        mustRunAfter(it)
-    }
 }

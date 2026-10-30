@@ -42,15 +42,12 @@ fun Char.isISOControl() : Boolean {
     // Optimized form of:
     //     (codePoint >= 0x00 && codePoint <= 0x1F) ||
     //     (codePoint >= 0x7F && codePoint <= 0x9F);
-    return code <= 0x9F &&
-            (code >= 0x7F || code ushr 5 == 0)
+    return code <= 0x9F && (code >= 0x7F || code ushr 5 == 0)
 }
 
 fun Char.isDigit() : Boolean = this in '0'..'9'
 
-// Values compare by number, not by class, so a written 1 equals a parsed 1 (as in Gson, unlike Jackson):
-// two integral numbers as Long, anything else as Double, a Float through its shortest decimal form (0.1f is 0.1).
-// Hashes go through the same Double so that equal values hash equal.
+// Values compare by number, not by class
 // On JS every number passes `is Int`, hence the value check behind the class check.
 private fun isIntegral(n: Number) = n is Long || (n is Int || n is Short || n is Byte) && n.toDouble() % 1.0 == 0.0
 

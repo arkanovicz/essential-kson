@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm") // version pinned in settings.gradle.kts from ../gradle/libs.versions.toml
-    id("me.champeau.jmh") version "0.7.3"
+    kotlin("jvm")
+    id("me.champeau.jmh") version "0.7.4"
 }
 
 group = "com.republicate.kson"

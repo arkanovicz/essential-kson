@@ -1,16 +1,22 @@
+# v2.18
+
++ bump to Gradle 9.3.0, AGP 9.0.1 and Kotlin 2.3.21, Dokka 2.2.0.
++ switch from com.android.library to com.android.kotlin.multiplatform.library
++ Maven Central publishing now done with vanniktech maven-publish plugin
+
 # v2.17
 
-+ fix: the `\f` escape was rejected by the parser and never emitted by the serializer (form feed was written as `\u000c`), a leftover of the 2020 port from essential-json where the Kotlin `'\f'` literal does not exist
++ fix: add `\f` support (form feed escape sequence absent from Kotlin)
 
 # v2.16
 
-+ new: standalone JMH benchmark harness under `benchmark/` (kson vs Gson vs Jackson tree parsing; `cd benchmark && ../gradlew jmh`)
-+ perf: correctly-rounded fast decimal-to-double conversion (Clinger + Eisel-Lemire, core ported from Apache Fory) replaces platform `toDouble()` for numbers with up to 15 significant digits; ambiguous cases still fall back to the platform parser
-+ perf: parser rewritten over a sliding CharArray window (bulk chunk copies for string sources, buffered refills for streams, lazy line/column tracking) — ~1.7x faster parsing on typical payloads, now on par with Jackson and ahead of Gson for tree parsing on the JVM
-+ whitespace handling is now strictly JSON (space, tab, CR, LF) — Unicode spaces like NBSP are no longer silently accepted
-+ fix: JVM/Android consumers without slf4j-api on their classpath crashed with NoClassDefFoundError at first use (kotlin-logging-jvm declares it compileOnly); slf4j-api is now a runtime dependency
-+ fix: `Json.Object.equals()` is order-insensitive, as the `Map` contract requires (insertion order is still kept for iteration and serialization)
-+ change: `equals()` and `hashCode()` compare numbers by value whatever their class, as Gson does: a written `1` equals a parsed `1` (and `1.0`), a `Float` compares through its shortest decimal form so `0.1f` equals `0.1`; storage is untouched, values keep the class they were given
++ new: standalone benchmark (kson vs Gson vs Jackson tree parsing; run with  `cd benchmark && ../gradlew jmh`)
++ perf: fast decimal-to-double conversion (Clinger + Eisel-Lemire, core ported from Apache Fory) replacing toDouble()
++ perf: parser rewritten over a sliding CharArray window ; now on par with Jackson and ahead of Gson for tree parsing on the JVM
++ fix: whitespace handling is now strictly JSON (space, tab, CR, LF), unicode spaces like NBSPno longer silently accepted
++ fix: slf4j-api is now a runtime dependency
++ fix: `Json.Object.equals()` is now order-insensitive, as the `Map` contract requires (insertion order is still kept for iteration and serialization)
++ change: `equals()` and `hashCode()` compare numbers by value whatever their class, as Gson does
 
 # v2.15
 

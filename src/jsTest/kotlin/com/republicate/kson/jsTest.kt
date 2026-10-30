@@ -8,20 +8,14 @@ private fun readFileNode(filePath: String): String {
     return js("require('fs').readFileSync(filePath, 'utf8')") as String
 }
 
-// Get project root from generated BuildConfig
-private fun getProjectRoot(): String = BuildConfig.PROJECT_ROOT
-
-// Resolve path using Node.js path module
-private fun resolvePath(vararg paths: String): String {
-    return js("require('path').resolve.apply(null, paths)") as String
+// KGP runs node tests from build/js/packages/<name> and copies the test resources to build/processedResources
+private fun resolveResource(path: String): String {
+    return js("require('path').resolve(process.cwd(), '../../../processedResources/js/test', path)") as String
 }
 
 actual suspend fun getResource(path: String): String {
     return if (isNodeJs()) {
-        // Node.js: read from filesystem with absolute path
-        val projectRoot = getProjectRoot()
-        val fullPath = resolvePath(projectRoot, "src/commonTest/resources", path)
-        readFileNode(fullPath)
+        readFileNode(resolveResource(path))
     } else {
         // Browser: use HTTP client from webTest
         getResourceImpl(path)
