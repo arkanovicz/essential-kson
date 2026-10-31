@@ -184,7 +184,8 @@ tasks {
 
 mavenPublishing {
     publishToMavenCentral(automaticRelease = true)
-    signAllPublications()
+    // only the Central upload needs signatures; publishToMavenLocal feeds scratch consumers
+    if (gradle.startParameter.taskNames.any { it.contains("MavenCentral") }) signAllPublications()
     pom {
         name.set("essential-kson")
         description.set("essential-kson $version - Lightweight JSON library for Kotlin")
