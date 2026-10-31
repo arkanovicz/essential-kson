@@ -695,7 +695,7 @@ class EssentialJsonTest : BaseTestUnit()
             logger.info { "skipping $path" }
             return
         }
-        logger.error { "considering file $path" }
+        logger.debug { "considering file $path" }
         val awaitError = filename.startsWith("n_") || awaitExceptionByFilename.contains(path)
         val mayThrow = filename.startsWith("i_")
         val content = getResource(path)
