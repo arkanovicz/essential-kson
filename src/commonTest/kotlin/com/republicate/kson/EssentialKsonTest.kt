@@ -17,7 +17,7 @@ import kotlin.test.fail
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-private val logger = KotlinLogging.logger { "test" }
+private val logger = KotlinLogging.logger("test")
 
 private val watchFile = "test_parsing/i_number_huge_exp.json"
 

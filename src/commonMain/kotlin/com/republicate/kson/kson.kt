@@ -36,7 +36,7 @@ import kotlin.uuid.Uuid
 
 expect interface JsonSerializable
 
-private val logger = KotlinLogging.logger {}
+private val logger = KotlinLogging.logger("com.republicate.kson")
 
 fun Char.isISOControl() : Boolean {
     // Optimized form of:
