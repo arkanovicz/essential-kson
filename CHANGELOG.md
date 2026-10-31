@@ -3,6 +3,7 @@
 + bump to Gradle 9.3.0, AGP 9.0.1 and Kotlin 2.3.21, Dokka 2.2.0.
 + switch from com.android.library to com.android.kotlin.multiplatform.library
 + Maven Central publishing now done with vanniktech maven-publish plugin
++ dependencies: kotlinx-datetime 0.8.0, kotlin-logging 8.0.4, kotlinx-serialization-core 1.11.0, slf4j 2.0.20
 
 # v2.17
 
